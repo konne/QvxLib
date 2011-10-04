@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="QvxResult">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="QVX_OK"/>
+      <xs:enumeration value="QVX_UNKNOWN_COMMAND"/>
+      <xs:enumeration value="QVX_UNSUPPORTED_COMMAND"/>
+      <xs:enumeration value="QVX_UNEXPECTED_COMMAND"/>
+      <xs:enumeration value="QVX_SYNTAX_ERROR"/>
+      <xs:enumeration value="QVX_CONNECT_ERROR"/>
+      <xs:enumeration value="QVX_TABLE_NOT_FOUND"/>
+      <xs:enumeration value="QVX_FIELD_NOT_FOUND"/>
+      <xs:enumeration value="QVX_PIPE_ERROR"/>
+      <xs:enumeration value="QVX_UNEXPECTED_END_OF_DATA"/>
+      <xs:enumeration value="QVX_UNKNOWN_ERROR"/>
+      <xs:enumeration value="QVX_CANCEL"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="QvxReply">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="Result" type="QvxResult" />
+        <xs:element name="OutputValues">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="String" type="xs:string"
+              minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="ErrorMessage" type="xs:string" />
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,11 @@
+obj/
+[Bb]in
+[Dd]ebug*/
+[Rr]elease*/
+*.bak
+*.[Oo]bj
+*.suo
+*.vs10x
+*.psess
+*.docstates
+*.docstates.*

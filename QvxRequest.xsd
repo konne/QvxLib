@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="QvxCommand">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="QVX_CONNECT"/>
+      <xs:enumeration value="QVX_EXECUTE"/>
+      <xs:enumeration value="QVX_EDIT_CONNECT"/>
+      <xs:enumeration value="QVX_EDIT_SELECT"/>
+      <xs:enumeration value="QVX_GENERIC_COMMAND"/>
+      <xs:enumeration value="QVX_GET_EXECUTE_ERROR"/>
+      <xs:enumeration value="QVX_DISCONNECT"/>
+      <xs:enumeration value="QVX_TERMINATE"/>
+      <xs:enumeration value="QVX_PROGRESS"/>
+      <xs:enumeration value="QVX_ABORT"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="QvxConnectOptions">
+    <xs:all>
+      <xs:element name="Provider" type="xs:string" />
+      <xs:element name="LoginTimeoutSec" type="xs:int" />
+      <xs:element name="ConnectTimeoutSec" type="xs:int" />
+      <xs:element name="AutoCommit" type="xs:boolean" />
+      <xs:element name="ReadOnly" type="xs:boolean" />
+      <xs:element name="AllowPrompt" type="xs:boolean" />
+    </xs:all>
+  </xs:complexType>
+  <xs:element name="QvxRequest">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="Command" type="QvxCommand" />
+        <xs:element name="Parameters">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="String" type="xs:string"
+              maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Options" type="QvxConnectOptions" minOccurs="0" />
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

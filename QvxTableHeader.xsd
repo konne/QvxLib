@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="QvxFieldType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="QVX_SIGNED_INTEGER"/>
+      <xs:enumeration value="QVX_UNSIGNED_INTEGER"/>
+      <xs:enumeration value="QVX_IEEE_REAL"/>
+      <xs:enumeration value="QVX_PACKED_BCD"/>
+      <xs:enumeration value="QVX_BLOB"/>
+      <xs:enumeration value="QVX_TEXT"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="QvxFieldExtent">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="QVX_FIX"/>
+      <xs:enumeration value="QVX_COUNTED"/>
+      <xs:enumeration value="QVX_ZERO_TERMINATED"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="QvxNullRepresentation">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="QVX_NULL_NEVER"/>
+      <xs:enumeration value="QVX_NULL_ZERO_LENGTH"/>
+      <xs:enumeration value="QVX_NULL_FLAG_WITH_UNDEFINED_DATA"/>
+      <xs:enumeration value="QVX_NULL_FLAG_SUPPRESS_DATA"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="FieldAttrType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="UNKNOWN"/>
+      <xs:enumeration value="ASCII"/>
+      <xs:enumeration value="INTEGER"/>
+      <xs:enumeration value="REAL"/>
+      <xs:enumeration value="FIX"/>
+      <xs:enumeration value="MONEY"/>
+      <xs:enumeration value="DATE"/>
+      <xs:enumeration value="TIME"/>
+      <xs:enumeration value="TIMESTAMP"/>
+      <xs:enumeration value="INTERVAL"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="FieldAttributes">
+    <xs:all>
+      <xs:element name="Type" type="FieldAttrType" />
+      <xs:element name="nDec" type="xs:int" minOccurs="0" />
+      <xs:element name="UseThou" type="xs:int" minOccurs="0" />
+      <xs:element name="Fmt" type="xs:string" minOccurs="0" />
+      <xs:element name= "Dec" type="xs:string" minOccurs="0" />
+      <xs:element name= "Thou" type="xs:string" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+  <xs:element name="QvxTableHeader">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="MajorVersion" type="xs:int" />
+        <xs:element name="MinorVersion" type="xs:int" />
+        <xs:element name="CreateUtcTime" type="xs:dateTime" minOccurs="0" />
+        <xs:element name="TableName" type="xs:string" />
+        <xs:element name="UsesSeparatorByte" type="xs:boolean" minOccurs="0" />        
+        <xs:element name="BlockSize" type="xs:int" minOccurs="0" />
+        <xs:element name="Fields">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="QvxFieldHeader" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:all>
+                    <xs:element name="FieldName" type="xs:string" />
+                    <xs:element name="Type" type="QvxFieldType" />
+                    <xs:element name="Extent" type="QvxFieldExtent" />
+                    <xs:element name="NullRepresentation" type="QvxNullRepresentation" />
+                    <xs:element name="BigEndian" type="xs:boolean" minOccurs="0" />                    
+                    <xs:element name="CodePage" type="xs:int" minOccurs="0" />
+                    <xs:element name="ByteWidth" type="xs:int" minOccurs="0" />
+                    <xs:element name="FixPointDecimals" type="xs:int" minOccurs="0" />
+                    <xs:element name="FieldFormat" type="FieldAttributes" />
+                  </xs:all>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
