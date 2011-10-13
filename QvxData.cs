@@ -30,6 +30,7 @@ namespace QvxLib
     using System.Reflection;
     using System.Text;
     using Microsoft.CSharp;
+    using System.Collections;
     #endregion
 
     public static class ReflectionExtensions
@@ -49,7 +50,8 @@ namespace QvxLib
             public static readonly List<Type> BinaryWriterTypes = new List<Type>() {
                                                         typeof(bool),
                                                         typeof(byte),                                                                                                                                                                                                                                                   
-                                                        typeof(decimal),
+                                                        // only 4 or 8 byte REAL are supported by Qlikview
+                                                        //typeof(decimal),
                                                         typeof(double),
                                                         typeof(float),
                                                         typeof(int),
@@ -75,7 +77,8 @@ namespace QvxLib
                 if (mapType == typeof(UInt64)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_UNSIGNED_INTEGER, ByteWidth = 8, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
                 if (mapType == typeof(Single)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_IEEE_REAL, ByteWidth = 4, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.REAL, nDec = 0 } };
                 if (mapType == typeof(Double)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_IEEE_REAL, ByteWidth = 8, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.REAL, nDec = 0 } };
-                if (mapType == typeof(Decimal)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_IEEE_REAL, ByteWidth = 12, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.REAL, nDec = 0 } };
+                // only 4 or 8 byte REAL are supported by Qlikview
+                //if (mapType == typeof(Decimal)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_IEEE_REAL, ByteWidth = 16, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.REAL, nDec = 0 } };
 
                 if (mapType == typeof(bool)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_UNSIGNED_INTEGER, ByteWidth = 2, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
 
@@ -89,82 +92,7 @@ namespace QvxLib
             }
         }       
        #endregion
-
-        #region WriteQvxData
-        public static void WriteQvxData(BinaryWriter bw, IEnumerable<object> list, string code1, string code2)
-        {
-            try
-            {
-                #region Code Template
-                string code = @"
-namespace QvxLib { 
-    using System; 
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text; 
-    using System.Reflection;
-    using System.IO; 
-
-    public class QvxWriterClass 
-    { 
-        public static void QvxWriter(BinaryWriter bw, IEnumerable<object> list) 
-        {           
-            object tmpValue = null;    
-            byte[] sbuf = null;       
-            Type T_base__ = list.GetType().GetGenericArguments()[0];
-" + code1 + @"                        
-            foreach (var base__item in list) 
-            {
-" + code2 + @"
-            }
-        }
-    }
-}";
-                #endregion
-
-                TextWriter tw = File.CreateText(@"C:\Users\konne\Desktop\test.cs");
-                tw.Write(code);
-                tw.Close();
-
-                #region Compiler Paramater
-                CompilerParameters compilerParams = new CompilerParameters()
-                       {
-                           CompilerOptions = "/target:library /optimize /define:RELEASE",
-                           GenerateExecutable = false,
-                           WarningLevel = 3,
-                           GenerateInMemory = true,
-                           IncludeDebugInformation = false,
-                           ReferencedAssemblies = { "mscorlib.dll", "System.dll", "System.Core.dll" }
-                       };
-#if DEBUG
-                compilerParams.CompilerOptions = "/target:library /define:DEBUG";
-                compilerParams.GenerateInMemory = false;
-                compilerParams.IncludeDebugInformation = true;
-                compilerParams.TempFiles.KeepFiles = true;
-                compilerParams.TempFiles = new TempFileCollection(Environment.GetEnvironmentVariable("TEMP"), true);
-#endif
-                #endregion
-
-                var provOptions = new Dictionary<string, string>() { { "CompilerVersion", "v3.5" } };
-
-                CodeDomProvider codeProvider = new CSharpCodeProvider(provOptions);
-                CompilerResults results = codeProvider.CompileAssemblyFromSource(compilerParams, code);
-
-                if (!results.Errors.HasErrors)
-                {
-                    var QvxWriterClassType = results.CompiledAssembly.GetType("QvxLib.QvxWriterClass");
-                    var QvxWriter = QvxWriterClassType.GetMethod("QvxWriter", BindingFlags.Static | BindingFlags.Public);
-                    QvxWriter.Invoke(null, new object[] { bw, list });
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-        }
-        #endregion
-
+     
         private static void QvxFieldHeaderFromObject(ref List<QvxTableHeaderQvxFieldHeader> result, string prefix, ref string code1, ref string code2, Type t, ref int? blocksize)
         {
             string intprefix = prefix.Replace(".", "__");           
@@ -315,12 +243,209 @@ namespace QvxLib {
             }
             if (blocksize.HasValue)
             {
-                code1 = "              byte[] diffBuf = new Byte["+blocksize.Value.ToString()+"\r\n";
-                code2 = "                int startPos = bw.BaseStream.Position;\r\n" + code2;
+                code1 = code1+ "              byte[] diffBuf = new Byte["+blocksize.Value.ToString()+"];\r\n";
+                code2 = "                long startPos = bw.BaseStream.Position;\r\n" + code2;
                 code2 = code2 + "                ";
             }
 
             return new Tuple<List<QvxTableHeaderQvxFieldHeader>, string, string>(result, code1, code2);
         }
     }
+
+
+    #region QvxWriteCode
+    internal class QvxWriteCode
+    {
+        private byte[] QvxHeader;
+        private MethodInfo QvxWriterMethod;
+
+        public void WriteHeader(BinaryWriter bw)
+        {
+            bw.Write(QvxHeader);
+            bw.Write((byte)0x00);
+        }
+
+        public void WriteData(object item, BinaryWriter bw)
+        {
+            WriteData(new List<object>() { item }, bw);
+        }
+
+        public void WriteData(IEnumerable items, BinaryWriter bw)
+        {
+            QvxWriterMethod.Invoke(null, new object[] { bw, items });
+        }
+
+        public QvxWriteCode(Type type)
+        {
+            var data = QvxData.FromObjectCode(type);
+            var tbh = new QvxTableHeader();
+            tbh.TableName = type.Name;
+            tbh.Fields.AddRange(data.Item1);
+            QvxHeader = Encoding.UTF8.GetBytes(tbh.Serialize());
+
+            #region Code Template
+            string code = @"
+namespace QvxLib { 
+    using System; 
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text; 
+    using System.Reflection;
+    using System.IO; 
+
+    public class QvxWriterClass 
+    { 
+        public static void QvxWriter(BinaryWriter bw, IEnumerable<object> list) 
+        {           
+            object tmpValue = null;    
+            byte[] sbuf = null;       
+            Type T_base__ = list.GetType().GetGenericArguments()[0];
+" + data.Item2 + @"                        
+            foreach (var base__item in list) 
+            {
+" + data.Item3 + @"
+            }
+        }
+    }
+}";
+            #endregion
+
+            #region Compiler Paramater
+            CompilerParameters compilerParams = new CompilerParameters()
+            {
+                CompilerOptions = "/target:library /optimize /define:RELEASE",
+                GenerateExecutable = false,
+                WarningLevel = 3,
+                GenerateInMemory = true,
+                IncludeDebugInformation = false,
+                ReferencedAssemblies = { "mscorlib.dll", "System.dll", "System.Core.dll" }
+            };
+#if DEBUG
+            compilerParams.CompilerOptions = "/target:library /define:DEBUG";
+            compilerParams.GenerateInMemory = false;
+            compilerParams.IncludeDebugInformation = true;
+            compilerParams.TempFiles.KeepFiles = true;
+            compilerParams.TempFiles = new TempFileCollection(Environment.GetEnvironmentVariable("TEMP"), true);
+#endif
+            #endregion
+
+            var provOptions = new Dictionary<string, string>() { { "CompilerVersion", "v3.5" } };
+
+            CodeDomProvider codeProvider = new CSharpCodeProvider(provOptions);
+            CompilerResults results = codeProvider.CompileAssemblyFromSource(compilerParams, code);
+
+            if (!results.Errors.HasErrors)
+            {
+                var QvxWriterClassType = results.CompiledAssembly.GetType("QvxLib.QvxWriterClass");
+                QvxWriterMethod = QvxWriterClassType.GetMethod("QvxWriter", BindingFlags.Static | BindingFlags.Public);
+            }
+            else
+                throw new Exception("Compilation Error" + results.Output.ToString());
+        }
+    } 
+    #endregion
+
+    #region QvxWriter
+    public class QvxWriter
+    {
+        #region Variables
+        BinaryWriter bw;
+        QvxWriteCode qvxWriteCode;
+        #endregion
+
+        #region Construtors
+        internal QvxWriter(QvxWriteCode qvxWriteCode, BinaryWriter bw)
+        {
+            if (bw == null | qvxWriteCode == null)
+                throw new ArgumentNullException();
+
+            this.qvxWriteCode = qvxWriteCode;
+            this.bw = bw;
+
+            bw.BaseStream.Seek(0, SeekOrigin.Begin);
+            qvxWriteCode.WriteHeader(bw);
+        }
+
+        public QvxWriter(Type type, BinaryWriter bw) :
+            this(new QvxWriteCode(type), bw)
+        {
+        }
+
+        public QvxWriter(Type type, String FileName)
+            : this(type, new BinaryWriter(File.OpenWrite(FileName)))
+        {
+        }
+        #endregion
+
+        #region Add Date
+        public void Add(object item)
+        {
+            qvxWriteCode.WriteData(item, bw);
+        }
+
+        public void AddRange(IEnumerable items)
+        {
+            qvxWriteCode.WriteData(items, bw);
+        }
+        #endregion
+
+        #region Close
+        public void Close()
+        {
+            bw.Close();
+        }
+        #endregion
+    } 
+    #endregion
+
+    #region QvxSerializer
+    public class QvxSerializer
+    {
+        QvxWriteCode qvxWriteCode;
+
+        public QvxSerializer(Type type)
+        {
+            qvxWriteCode = new QvxWriteCode(type);
+        }
+
+        public void Serialize(IEnumerable items, BinaryWriter bw)
+        {
+            if (bw == null | items == null)
+                throw new ArgumentNullException();
+
+            qvxWriteCode.WriteHeader(bw);
+           
+            qvxWriteCode.WriteData(items, bw);
+            bw.Close();
+        }
+
+        public void Serialize(IEnumerable items, String FileName)
+        {
+            Serialize(items, new BinaryWriter(File.OpenWrite(FileName)));
+        }
+
+    } 
+    #endregion
+
+    #region QvxSerializer<T>
+    public class QvxSerializer<T>
+    {
+        QvxSerializer qvxSerializer;
+
+        public QvxSerializer()
+        {
+            qvxSerializer = new QvxSerializer(typeof(T));
+        }
+
+        public void Serialize(IEnumerable<T> items, BinaryWriter bw)
+        {
+            qvxSerializer.Serialize(items, bw);
+        }
+
+        public void Serialize(IEnumerable<T> items, String FileName)
+        {
+            qvxSerializer.Serialize(items, FileName);
+        }
+    } 
+    #endregion
 }
