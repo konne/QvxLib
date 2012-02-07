@@ -6,7 +6,7 @@ namespace QvxLib
     public partial class QvxRequest
     {
         [XmlIgnore]
-        public Int32 QVWindow { get; set; }
+        public QVXWindow QVWindow { get; set; }
 
         [XmlIgnore]
         public object Connection { get; set; }

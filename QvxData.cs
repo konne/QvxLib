@@ -41,6 +41,7 @@ namespace QvxLib
         }
     }
 
+    #region QvxData
     public class QvxData
     {
         #region Mapping C# Types -> Qvx Types
@@ -62,15 +63,15 @@ namespace QvxLib
                                                         typeof(uint),
                                                         typeof(ulong),
                                                         typeof(ushort),
-                                                        typeof(DateTime)}; 
+                                                        typeof(DateTime)};
             #endregion
-                                     
+
             internal static QvxTableHeaderQvxFieldHeader MapFieldType(Type mapType)
             {
                 if (mapType == typeof(SByte)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_SIGNED_INTEGER, ByteWidth = 1, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
                 if (mapType == typeof(Int16)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_SIGNED_INTEGER, ByteWidth = 2, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
                 if (mapType == typeof(Int32)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_SIGNED_INTEGER, ByteWidth = 4, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
-                if (mapType == typeof(Int64)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_SIGNED_INTEGER, ByteWidth = 8, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };                
+                if (mapType == typeof(Int64)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_SIGNED_INTEGER, ByteWidth = 8, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
                 if (mapType == typeof(Byte)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_UNSIGNED_INTEGER, ByteWidth = 1, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
                 if (mapType == typeof(UInt16)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_UNSIGNED_INTEGER, ByteWidth = 2, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
                 if (mapType == typeof(UInt32)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_UNSIGNED_INTEGER, ByteWidth = 4, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
@@ -83,19 +84,19 @@ namespace QvxLib
                 if (mapType == typeof(bool)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_UNSIGNED_INTEGER, ByteWidth = 2, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.INTEGER, nDec = 0 } };
 
                 if (mapType == typeof(Char)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_TEXT, ByteWidth = 4, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN } };
-                if (mapType == typeof(Char[])) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_TEXT, ByteWidth = 4, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN} };
-                if (mapType == typeof(Byte[])) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_BLOB, ByteWidth = 1, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN} };
+                if (mapType == typeof(Char[])) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_TEXT, ByteWidth = 4, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN } };
+                if (mapType == typeof(Byte[])) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_BLOB, ByteWidth = 1, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN } };
 
                 if (mapType == typeof(DateTime)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_IEEE_REAL, ByteWidth = 8, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.TIMESTAMP, nDec = 0 } };
 
                 return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_TEXT, ByteWidth = 4, ByteWidthSpecified = true, NullRepresentation = QvxNullRepresentation.QVX_NULL_ZERO_LENGTH, Extent = QvxFieldExtent.QVX_COUNTED, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN } };
             }
-        }       
-       #endregion
-     
+        }
+        #endregion
+
         private static void QvxFieldHeaderFromObject(ref List<QvxTableHeaderQvxFieldHeader> result, string prefix, ref string code1, ref string code2, Type t, ref int? blocksize)
         {
-            string intprefix = prefix.Replace(".", "__");           
+            string intprefix = prefix.Replace(".", "__");
 
             if (result == null)
                 result = new List<QvxTableHeaderQvxFieldHeader>();
@@ -236,22 +237,22 @@ namespace QvxLib
             string code1 = "";
             string code2 = "";
             int? blocksize = 0;
-            QvxFieldHeaderFromObject(ref result, "base.", ref code1, ref code2, t,ref blocksize);
+            QvxFieldHeaderFromObject(ref result, "base.", ref code1, ref code2, t, ref blocksize);
             foreach (var item in result)
             {
                 item.FieldName = item.FieldName.Substring(5);
             }
             if (blocksize.HasValue)
             {
-                code1 = code1+ "              byte[] diffBuf = new Byte["+blocksize.Value.ToString()+"];\r\n";
+                code1 = code1 + "              byte[] diffBuf = new Byte[" + blocksize.Value.ToString() + "];\r\n";
                 code2 = "                long startPos = bw.BaseStream.Position;\r\n" + code2;
                 code2 = code2 + "                ";
             }
 
             return new Tuple<List<QvxTableHeaderQvxFieldHeader>, string, string>(result, code1, code2);
         }
-    }
-
+    }    
+    #endregion
 
     #region QvxWriteCode
     internal class QvxWriteCode

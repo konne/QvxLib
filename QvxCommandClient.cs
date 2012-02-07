@@ -41,7 +41,7 @@ namespace QvxLib
         bool close = false;
 
         private string pipeName;
-        private Int32 QVWindow;
+        private QVXWindow QVWindow;
 
         bool running = false;
         public bool Running
@@ -59,8 +59,8 @@ namespace QvxLib
             thread = new Thread(new ThreadStart(QvxCommandWorker));
             thread.IsBackground = true;
             thread.Name = "QvxCommandWorker";
-            this.pipeName = PipeName;
-            this.QVWindow = QVWindow;
+            this.pipeName = PipeName.Replace(@"\\.\pipe\", "");
+            this.QVWindow = new QVXWindow(QVWindow);
         }
         #endregion
 
@@ -161,7 +161,7 @@ namespace QvxLib
                         {
                             // TODO fix error logging to NLOG
                             Console.WriteLine(ex);
-                            Thread.Sleep(4000);
+                            Thread.Sleep(2000);
                             close = true;
                         }
 

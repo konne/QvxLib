@@ -27,6 +27,7 @@ namespace QvxLib
     using System.Linq;
     using System.Text;
     using NLog;
+    using System.IO;
     #endregion
 
     #region QvxGenericCommands
@@ -42,7 +43,7 @@ namespace QvxLib
     #region QvxExecuteCommands
     public enum QvxExecuteCommands
     {
-        DEFAULT,
+        SQL,
         TABLES,
         COLUMNS,
         TYPES
@@ -60,11 +61,10 @@ namespace QvxLib
         #endregion
 
         #region HandleRequest
-
         public QvxReply HandleRequest(QvxGenericCommands command)
         {
             var result = new QvxReply() { Result = QvxResult.QVX_OK };
-
+        
             switch (command)
             {
                 case QvxGenericCommands.HaveStarField:
@@ -72,12 +72,12 @@ namespace QvxLib
                         result.OutputValues.Add(HaveStarField.Value.ToString());
                     break;
                 case QvxGenericCommands.IsConnected:
-                    if (IsConnected.HasValue)
+                    if (IsConnected.HasValue)                  
                         result.OutputValues.Add(IsConnected.Value.ToString());
                     break;
                 case QvxGenericCommands.DisableQlikViewSelectButton:
-                    if (DisableQlikViewSelectButton.HasValue)
-                        result.OutputValues.Add(DisableQlikViewSelectButton.Value.ToString());
+                    if (DisableQlikViewSelectButton.HasValue)                  
+                        result.OutputValues.Add(DisableQlikViewSelectButton.Value.ToString());                    
                     break;
                 case QvxGenericCommands.GetCustomCaption:
                     if (GetCustomCaption != null)
@@ -93,6 +93,111 @@ namespace QvxLib
     }
     #endregion
 
+    #region QvxQvxExecuteCommandHandler Helper Classes
+    public class QvxExecuteRequestTablesResult
+    {
+        public IEnumerable<QvxTablesRow> Tables;
+        public QvxResult Result;
+    }
+
+    public class QvxExecuteRequestColumnsResult
+    {
+        public IEnumerable<QvxColumsRow> Columns;
+        public QvxResult Result;
+    } 
+    #endregion
+
+    #region QvxQvxExecuteCommandHandler
+    public class QvxQvxExecuteCommandHandler
+    {      
+        #region Variables
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
+        public Func<QvxExecuteRequestTablesResult> QvxExecuteRequestTablesHandler;
+        public Func<string, QvxExecuteRequestColumnsResult> QvxExecuteRequestColumnsHandler;
+        public Func<QvxResult> QvxExecuteRequestTypesHandler;
+        public Func<string, QvsDataClient, List<string>, QvxResult> QvxExecuteRequestSelectHandler;          
+        #endregion
+
+        #region HandleRequest
+        public QvxReply HandleRequest(QvxExecuteCommands command, string cmd, QvsDataClient dataclient, List<string> param)
+        {
+            var result = new QvxReply() { Result = QvxResult.QVX_OK };
+            switch (command)
+            {
+                case QvxExecuteCommands.SQL:
+                    result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
+                    if (QvxExecuteRequestSelectHandler != null)
+                    {
+                        var res2 = QvxExecuteRequestSelectHandler(cmd, dataclient, param);
+                    }
+                    break;
+
+                #region TYPES
+                case QvxExecuteCommands.TYPES:
+                    result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
+                    if (QvxExecuteRequestTypesHandler != null)
+                    {
+                        // TODO: 
+                    }
+                    break;
+                #endregion
+
+                #region COLUMNS
+                case QvxExecuteCommands.COLUMNS:
+                    result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
+                    if (QvxExecuteRequestColumnsHandler != null)
+                    {
+                        if ((param != null) && (param.Count > 0) && param[0].StartsWith("TABLE_NAME="))
+                        {
+                            string tablename = param[0].Substring(11);
+                            var res = QvxExecuteRequestColumnsHandler(tablename);
+                            if (res != null && res.Columns != null)
+                            {
+                                result.Result = res.Result;
+                                if (result.Result == QvxResult.QVX_OK)
+                                    QvxColumsRow.Serialize(res.Columns, new BinaryWriter(dataclient));
+                            }
+                        }
+                    }
+                    break;
+                #endregion
+
+                #region TABLES
+                case QvxExecuteCommands.TABLES:
+                    result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
+                    if (QvxExecuteRequestColumnsHandler != null)
+                    {
+                        var res = QvxExecuteRequestTablesHandler();
+                        if (res != null && res.Tables != null)
+                        {
+                            result.Result = res.Result;
+                            if (result.Result == QvxResult.QVX_OK)
+                                QvxTablesRow.Serialize(res.Tables, new BinaryWriter(dataclient));
+                        }
+                    }
+                    break;
+                #endregion
+
+                #region Default
+                default:
+                    result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
+                    break;
+                #endregion
+            }
+
+            if (result.Result == QvxResult.QVX_OK)
+            {
+                // TODO: Change StartThread Close complete
+                dataclient.StartThread();
+                dataclient.Close();
+            }
+            return result;
+        } 
+        #endregion
+    }
+    #endregion
+
     #region QvxDefaultHandleRequestHandler
     public class QvxDefaultHandleRequestHandler
     {
@@ -100,9 +205,10 @@ namespace QvxLib
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public Func<string, QvxReply> QvxConnectHandler;
-        public Func<QvxExecuteCommands, string, string, List<string>, QvxReply> QvxExecuteHandler;
-        public Func<string, Int32, QvxReply> QvxEditConnectHandler;
-        public Func<string, string, Int32, QvxReply> QvxEditSelectHandler;
+        public Func<QvxExecuteCommands, string, QvsDataClient, List<string>, QvxReply> QvxExecuteHandler;
+        public Func<QvxReply> QvxExecuteErrorHandler;
+        public Func<string, QVXWindow, QvxReply> QvxEditConnectHandler;
+        public Func<string, string, QVXWindow, QvxReply> QvxEditSelectHandler;
         public Func<QvxGenericCommands, QvxReply> QvxGenericCommandHandler;
         public Func<QvxReply> QvxDisconnectHandler;        
         public Action QvxTerminateHandler;
@@ -111,8 +217,7 @@ namespace QvxLib
         #region HandleRequest
         public QvxReply HandleRequest(QvxRequest request)
         {
-            logger.Debug("HandleRequest Command:", request.Command);
-            logger.Debug("HandleRequest:" + request.Serialize());
+            logger.Debug("HandleRequest Command:", request.Command);           
             var result = new QvxReply() { Result = QvxResult.QVX_OK };
             try
             {
@@ -141,7 +246,7 @@ namespace QvxLib
                         {
                             QvxExecuteCommands cmd;
                             if (!Enum.TryParse<QvxExecuteCommands>(request.Parameters[0], out cmd))
-                                cmd = QvxExecuteCommands.DEFAULT;
+                                cmd = QvxExecuteCommands.SQL;
 
                             if (QvxExecuteHandler == null)
                                 result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
@@ -151,7 +256,7 @@ namespace QvxLib
                                 if (request.Parameters.Count == 3)
                                     list = request.Parameters[2].Split(new char[1] { ';' }).ToList();
 
-                                result = QvxExecuteHandler(cmd, request.Parameters[0], request.Parameters[1], list);
+                                result = QvxExecuteHandler(cmd, request.Parameters[0], new QvsDataClient(request.Parameters[1]), list);
                             }
                         }
                         break;
@@ -190,7 +295,6 @@ namespace QvxLib
                             string command = request.Parameters[0];
                             QvxGenericCommands cmd;
                             bool validCmd = Enum.TryParse<QvxGenericCommands>(command, out cmd);
-
                             if ((QvxGenericCommandHandler == null) | (!validCmd))
                                 result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
                             else
@@ -219,14 +323,10 @@ namespace QvxLib
                     #endregion
 
                     #region QVX_GET_EXECUTE_ERROR
-                    case QvxCommand.QVX_GET_EXECUTE_ERROR:
-                        // TODO Add QVX_GET_EXECUTE_ERROR to Actions
+                    case QvxCommand.QVX_GET_EXECUTE_ERROR:                        
                         result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
-                                               
-                        // Wenn ein Fehler enthalten ist muss einfach den outputvalues was hinzugefügt werden.
-                        //result.OutputValues.Add("Error aus der List1");
-                        //result.OutputValues.Add("Error2 mal sehn");
-                      
+                        if (QvxExecuteErrorHandler != null)
+                            result = QvxExecuteErrorHandler();
                         break; 
                     #endregion
 
