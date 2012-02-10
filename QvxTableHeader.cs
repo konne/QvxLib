@@ -7,6 +7,6 @@ namespace QvxLib
 
     public partial class QvxTableHeaderQvxFieldHeader
     {
-        //todo: check ?? public Func<object> ReturnValue;
+        
     }
 }

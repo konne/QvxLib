@@ -28,6 +28,7 @@ namespace QvxLib
     using System.Text;
     using NLog;
     using System.IO;
+    using System.Threading;
     #endregion
 
     #region QvxGenericCommands
@@ -93,29 +94,15 @@ namespace QvxLib
     }
     #endregion
 
-    #region QvxQvxExecuteCommandHandler Helper Classes
-    public class QvxExecuteRequestTablesResult
-    {
-        public IEnumerable<QvxTablesRow> Tables;
-        public QvxResult Result;
-    }
-
-    public class QvxExecuteRequestColumnsResult
-    {
-        public IEnumerable<QvxColumsRow> Columns;
-        public QvxResult Result;
-    } 
-    #endregion
-
     #region QvxQvxExecuteCommandHandler
     public class QvxQvxExecuteCommandHandler
     {      
         #region Variables
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public Func<QvxExecuteRequestTablesResult> QvxExecuteRequestTablesHandler;
-        public Func<string, QvxExecuteRequestColumnsResult> QvxExecuteRequestColumnsHandler;
-        public Func<QvxResult> QvxExecuteRequestTypesHandler;
+        public Func<IEnumerable<QvxTablesRow>> QvxExecuteRequestTablesHandler;
+        public Func<string, IEnumerable<QvxColumsRow>> QvxExecuteRequestColumnsHandler;
+        public Func<IEnumerable<object>> QvxExecuteRequestTypesHandler;
         public Func<string, QvsDataClient, List<string>, QvxResult> QvxExecuteRequestSelectHandler;          
         #endregion
 
@@ -125,20 +112,33 @@ namespace QvxLib
             var result = new QvxReply() { Result = QvxResult.QVX_OK };
             switch (command)
             {
+                #region SQL
                 case QvxExecuteCommands.SQL:
                     result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
                     if (QvxExecuteRequestSelectHandler != null)
                     {
-                        var res2 = QvxExecuteRequestSelectHandler(cmd, dataclient, param);
+                        result.Result = QvxExecuteRequestSelectHandler(cmd, dataclient, param);
                     }
-                    break;
+                    break; 
+                #endregion
 
                 #region TYPES
                 case QvxExecuteCommands.TYPES:
                     result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
                     if (QvxExecuteRequestTypesHandler != null)
                     {
-                        // TODO: 
+                        var res = QvxExecuteRequestTypesHandler();
+                        if (res != null)
+                        {
+                            result.Result = QvxResult.QVX_OK;
+
+                            // Get Type of IEnuerable<T>
+                            Type type = res.GetType().GetGenericArguments()[0];
+                            var serializer = new QvxSerializer(type);
+                            serializer.Serialize(res, new BinaryWriter(dataclient));                         
+                        }
+                        else
+                            result.Result = QvxResult.QVX_UNKNOWN_ERROR; 
                     }
                     break;
                 #endregion
@@ -152,12 +152,13 @@ namespace QvxLib
                         {
                             string tablename = param[0].Substring(11);
                             var res = QvxExecuteRequestColumnsHandler(tablename);
-                            if (res != null && res.Columns != null)
+                            if (res != null)
                             {
-                                result.Result = res.Result;
-                                if (result.Result == QvxResult.QVX_OK)
-                                    QvxColumsRow.Serialize(res.Columns, new BinaryWriter(dataclient));
+                                result.Result = QvxResult.QVX_OK;
+                                QvxColumsRow.Serialize(res, new BinaryWriter(dataclient));
                             }
+                            else
+                                result.Result = QvxResult.QVX_UNKNOWN_ERROR;
                         }
                     }
                     break;
@@ -169,12 +170,17 @@ namespace QvxLib
                     if (QvxExecuteRequestColumnsHandler != null)
                     {
                         var res = QvxExecuteRequestTablesHandler();
-                        if (res != null && res.Tables != null)
+                        if (res != null)
                         {
-                            result.Result = res.Result;
-                            if (result.Result == QvxResult.QVX_OK)
-                                QvxTablesRow.Serialize(res.Tables, new BinaryWriter(dataclient));
+                            result.Result = QvxResult.QVX_OK;
+                            dataclient.DataClientDeliverData = (dc) =>
+                                {                                 
+                                    QvxTablesRow.Serialize(res, new BinaryWriter(dc));                                  
+                                    dc.Close();
+                                };                          
                         }
+                        else
+                            result.Result = QvxResult.QVX_UNKNOWN_ERROR;
                     }
                     break;
                 #endregion
@@ -189,8 +195,7 @@ namespace QvxLib
             if (result.Result == QvxResult.QVX_OK)
             {
                 // TODO: Change StartThread Close complete
-                dataclient.StartThread();
-                dataclient.Close();
+                dataclient.StartThread();            
             }
             return result;
         } 

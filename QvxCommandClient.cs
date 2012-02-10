@@ -29,12 +29,15 @@ namespace QvxLib
     using System.Threading;
     using System.IO.Pipes;
     using System.IO;
+using NLog;
     #endregion
 
     #region QvxCommandClient
     public class QvxCommandClient
     {
         #region Variables & Properties
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         public Func<QvxRequest, QvxReply> HandleQvxRequest;
 
         Thread thread;
@@ -113,18 +116,16 @@ namespace QvxLib
                             try
                             {
                                 request = QvxRequest.Deserialize(sdata);
+                               
                             }
                             catch (Exception ex)
                             {
-                                // TODO fix error logging to NLOG
-                                Console.WriteLine(sdata);
-                                Thread.Sleep(10000);
-                                throw;
-                            }
+                                logger.Error(ex);
+                                throw ex;                         
+                            }                                                  
                             request.QVWindow = QVWindow;
-                            #endregion
-
                             request.Connection = connection;
+                            #endregion
 
                             #region Handle QvxRequets
                             QvxReply result = null;
@@ -159,9 +160,8 @@ namespace QvxLib
                         }
                         catch (Exception ex)
                         {
-                            // TODO fix error logging to NLOG
-                            Console.WriteLine(ex);
-                            Thread.Sleep(2000);
+                            logger.Error(ex);                         
+                            Thread.Sleep(500);
                             close = true;
                         }
 
@@ -178,11 +178,7 @@ namespace QvxLib
             }
             catch (Exception ex)
             {
-                // TODO fix error logging to NLOG
-                //System.IO.TextWriter tw2 = System.IO.File.AppendText(@"C:\Users\konne\Desktop\sendataEX" + DateTime.Now.Ticks.ToString() + ".log");
-
-                //tw2.WriteLine(ex.Message);
-                //tw2.Close();
+                logger.Error(ex);
             }
         }
         #endregion

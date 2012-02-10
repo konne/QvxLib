@@ -42,7 +42,11 @@ using System.IO;
 
         private string pipeName;
 
+        public Action<QvsDataClient> DataClientDeliverData;
+
         private static Logger logger = LogManager.GetCurrentClassLogger();
+
+        public object Tag { get; set; }        
         #endregion
 
         #region Construtor
@@ -69,7 +73,7 @@ using System.IO;
         }
         #endregion
 
-        #region Stream Abstract Methods
+        #region Methods to Implement Writeable Stream
         public override bool CanRead
         {
             get { return false; }
@@ -132,25 +136,7 @@ using System.IO;
                 SendQueue.Add(newBuf);
             }
         }
-        #endregion
-
-        #region AddData
-        [Obsolete("Please Use Stream Functions instead")]
-        public void AddData(string s)
-        {
-            AddData(ASCIIEncoding.ASCII.GetBytes(s));
-        }
-
-        [Obsolete("Please Use Stream Functions instead")]
-        public void AddData(byte[] buffer)
-        {
-            var buffer2 = buffer.Clone() as byte[];
-            lock (lockQueue)
-            {
-                SendQueue.Add(buffer2);
-            }
-        }
-        #endregion
+        #endregion    
 
         #region QvxDataWorker
         private void QvxDataWorker()
@@ -164,6 +150,17 @@ using System.IO;
                 using (NamedPipeClientStream pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.Out))
                 {                   
                     pipeClient.Connect(1000);
+
+                    if (pipeClient.IsConnected)
+                    {
+                        if (DataClientDeliverData != null)
+                        {
+                            var thread = new Thread(new ThreadStart(() => { DataClientDeliverData(this); }));
+                            thread.IsBackground = false;
+                            thread.Name = "DataClientDeliverDataThread";
+                            thread.Start();
+                        }
+                    }
                   
                     while (pipeClient.IsConnected)
                     {
@@ -229,6 +226,7 @@ using System.IO;
             {
                 logger.ErrorException("Exceptions:" + pipeName, ex);
             }
+            Tag = null;
         }
         #endregion
     }
