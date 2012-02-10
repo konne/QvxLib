@@ -300,7 +300,8 @@ namespace QvxLib {
         {           
             object tmpValue = null;    
             byte[] sbuf = null;       
-            Type T_base__ = list.GetType().GetGenericArguments()[0];
+            //Type T_base__ = list.GetType().GetGenericArguments()[0];
+            Type T_base__ = list.GetType().GetInterface(typeof(IEnumerable<>).Name).GetGenericArguments()[0];
 " + data.Item2 + @"                        
             foreach (var base__item in list) 
             {
