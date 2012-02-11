@@ -101,6 +101,12 @@ namespace QvxLib
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public Func<IEnumerable<QvxTablesRow>> QvxExecuteRequestTablesHandler;
+
+        /// <summary>
+        /// This Action applies on a request of the available columns.
+        /// If the Argument is different from "null" then only columns for
+        /// a given table are requested
+        /// </summary>
         public Func<string, IEnumerable<QvxColumsRow>> QvxExecuteRequestColumnsHandler;
         public Func<IEnumerable<object>> QvxExecuteRequestTypesHandler;
         public Func<string, QvsDataClient, List<string>, QvxResult> QvxExecuteRequestSelectHandler;          
@@ -148,18 +154,26 @@ namespace QvxLib
                     result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
                     if (QvxExecuteRequestColumnsHandler != null)
                     {
+                        string tablename = null;
+
+                        result.Result = QvxResult.QVX_OK;
+
                         if ((param != null) && (param.Count > 0) && param[0].StartsWith("TABLE_NAME="))
                         {
-                            string tablename = param[0].Substring(11);
-                            var res = QvxExecuteRequestColumnsHandler(tablename);
-                            if (res != null)
-                            {
-                                result.Result = QvxResult.QVX_OK;
-                                QvxColumsRow.Serialize(res, new BinaryWriter(dataclient));
-                            }
-                            else
-                                result.Result = QvxResult.QVX_UNKNOWN_ERROR;
+                            tablename = param[0].Substring(11);
                         }
+
+                        dataclient.DataClientDeliverData = (dc) =>
+                            {
+                                var res = QvxExecuteRequestColumnsHandler(tablename);
+                                if (res != null)
+                                {
+                                    QvxColumsRow.Serialize(res, new BinaryWriter(dataclient));
+                                }
+
+                                dc.Close();
+                            };
+
                     }
                     break;
                 #endregion
@@ -169,18 +183,15 @@ namespace QvxLib
                     result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
                     if (QvxExecuteRequestColumnsHandler != null)
                     {
-                        var res = QvxExecuteRequestTablesHandler();
-                        if (res != null)
-                        {
-                            result.Result = QvxResult.QVX_OK;
-                            dataclient.DataClientDeliverData = (dc) =>
-                                {                                 
-                                    QvxTablesRow.Serialize(res, new BinaryWriter(dc));                                  
-                                    dc.Close();
-                                };                          
-                        }
-                        else
-                            result.Result = QvxResult.QVX_UNKNOWN_ERROR;
+                        result.Result = QvxResult.QVX_OK;
+                        dataclient.DataClientDeliverData = (dc) =>
+                            {
+                                var res = QvxExecuteRequestTablesHandler();
+                                if (res != null)
+                                    QvxTablesRow.Serialize(res, new BinaryWriter(dc));
+
+                                dc.Close();
+                            };
                     }
                     break;
                 #endregion
@@ -193,8 +204,7 @@ namespace QvxLib
             }
 
             if (result.Result == QvxResult.QVX_OK)
-            {
-                // TODO: Change StartThread Close complete
+            {                
                 dataclient.StartThread();            
             }
             return result;
