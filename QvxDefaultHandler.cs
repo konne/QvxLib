@@ -108,12 +108,22 @@ namespace QvxLib
         /// a given table are requested
         /// </summary>
         public Func<string, IEnumerable<QvxColumsRow>> QvxExecuteRequestColumnsHandler;
+
+        /// <summary>
+        /// This Action applies on a request of the available types        
+        /// </summary>
         public Func<IEnumerable<object>> QvxExecuteRequestTypesHandler;
-        public Func<string, QvsDataClient, List<string>, QvxResult> QvxExecuteRequestSelectHandler;          
+
+        /// <summary>
+        /// This Action applies on a request of the date
+        /// this Argument ist the SQL String
+        /// followed by an Action that delivers the data after a succsessfull connect        
+        /// </summary>
+        public Func<string, List<string>, Tuple<QvxResult, Action<QvxDataClient>>> QvxExecuteRequestSelectHandler;          
         #endregion
 
         #region HandleRequest
-        public QvxReply HandleRequest(QvxExecuteCommands command, string cmd, QvsDataClient dataclient, List<string> param)
+        public QvxReply HandleRequest(QvxExecuteCommands command, string cmd, QvxDataClient dataclient, List<string> param)
         {
             var result = new QvxReply() { Result = QvxResult.QVX_OK };
             switch (command)
@@ -123,7 +133,12 @@ namespace QvxLib
                     result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
                     if (QvxExecuteRequestSelectHandler != null)
                     {
-                        result.Result = QvxExecuteRequestSelectHandler(cmd, dataclient, param);
+                        var tmpResult = QvxExecuteRequestSelectHandler(cmd, param);
+                        if (tmpResult != null)
+                        {
+                            result.Result = tmpResult.Item1;
+                            dataclient.DataClientDeliverData = tmpResult.Item2;                            
+                        }
                     }
                     break; 
                 #endregion
@@ -137,9 +152,9 @@ namespace QvxLib
                         if (res != null)
                         {
                             result.Result = QvxResult.QVX_OK;
-
-                            // Get Type of IEnuerable<T>
-                            Type type = res.GetType().GetGenericArguments()[0];
+                                                        
+                            Type type = res.GetType().GetInterface(typeof(IEnumerable<>).Name).GetGenericArguments()[0];
+                            
                             var serializer = new QvxSerializer(type);
                             serializer.Serialize(res, new BinaryWriter(dataclient));                         
                         }
@@ -167,13 +182,8 @@ namespace QvxLib
                             {
                                 var res = QvxExecuteRequestColumnsHandler(tablename);
                                 if (res != null)
-                                {
-                                    QvxColumsRow.Serialize(res, new BinaryWriter(dataclient));
-                                }
-
-                                dc.Close();
+                                    QvxColumsRow.Serialize(res, new BinaryWriter(dataclient));                        
                             };
-
                     }
                     break;
                 #endregion
@@ -189,8 +199,6 @@ namespace QvxLib
                                 var res = QvxExecuteRequestTablesHandler();
                                 if (res != null)
                                     QvxTablesRow.Serialize(res, new BinaryWriter(dc));
-
-                                dc.Close();
                             };
                     }
                     break;
@@ -220,7 +228,7 @@ namespace QvxLib
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public Func<string, QvxReply> QvxConnectHandler;
-        public Func<QvxExecuteCommands, string, QvsDataClient, List<string>, QvxReply> QvxExecuteHandler;
+        public Func<QvxExecuteCommands, string, QvxDataClient, List<string>, QvxReply> QvxExecuteHandler;
         public Func<QvxReply> QvxExecuteErrorHandler;
         public Func<string, QVXWindow, QvxReply> QvxEditConnectHandler;
         public Func<string, string, QVXWindow, QvxReply> QvxEditSelectHandler;
@@ -249,7 +257,15 @@ namespace QvxLib
                             if (QvxConnectHandler == null)
                                 result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
                             else
+                            {
+                                // TODO: Parse User & Password, Config Options
+
+                                //QlikView uses extra quotation around UserID and Password value if a) a value contains a
+                                //semicolon or b) a value starts with a double quote. The Connectors that use such values have
+                                //to modify QVX_CONNECT and QVX_EDIT_CONNECT command handling by removing
+                                //or adding the extra quotation when it is relevant.
                                 result = QvxConnectHandler(request.Parameters[0]);
+                            }
                         break;
                     #endregion
 
@@ -271,7 +287,7 @@ namespace QvxLib
                                 if (request.Parameters.Count == 3)
                                     list = request.Parameters[2].Split(new char[1] { ';' }).ToList();
 
-                                result = QvxExecuteHandler(cmd, request.Parameters[0], new QvsDataClient(request.Parameters[1]), list);
+                                result = QvxExecuteHandler(cmd, request.Parameters[0], new QvxDataClient(request.Parameters[1]), list);
                             }
                         }
                         break;

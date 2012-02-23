@@ -30,6 +30,7 @@ namespace QvxLib
     using System.IO.Pipes;
     using System.IO;
 using NLog;
+    using System.Globalization;
     #endregion
 
     #region QvxCommandClient
@@ -59,11 +60,34 @@ using NLog;
         #region Construtor
         public QvxCommandClient(string PipeName, Int32 QVWindow)
         {
+            ConstructorHelper(PipeName,new QVXWindow(QVWindow));
+        }
+
+        public QvxCommandClient(string PipeName, QVXWindow QVWindow)
+        {
+            ConstructorHelper(PipeName, QVWindow);
+        }
+
+        public QvxCommandClient(string[] args)
+        {
+            if (args == null)
+                throw new ArgumentNullException("args");
+
+            if (args.Length < 2)
+                throw new ArgumentException("args need at least two Items");
+
+            var QVHwnd = new QVXWindow(Int32.Parse(args[0], NumberStyles.HexNumber));            
+
+            ConstructorHelper(args[1], QVWindow);
+        }
+
+        private void ConstructorHelper(string PipeName, QVXWindow QVWindow)
+        {
             thread = new Thread(new ThreadStart(QvxCommandWorker));
             thread.IsBackground = true;
             thread.Name = "QvxCommandWorker";
             this.pipeName = PipeName.Replace(@"\\.\pipe\", "");
-            this.QVWindow = new QVXWindow(QVWindow);
+            this.QVWindow = QVWindow;
         }
         #endregion
 

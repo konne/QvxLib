@@ -32,7 +32,7 @@ using System.IO;
     #endregion
 
     #region QvsDataClient
-    public class QvsDataClient : Stream
+    public class QvxDataClient : Stream
     {
         #region Variables
         Thread thread;
@@ -42,15 +42,13 @@ using System.IO;
 
         private string pipeName;
 
-        public Action<QvsDataClient> DataClientDeliverData;
+        public Action<QvxDataClient> DataClientDeliverData;
 
-        private static Logger logger = LogManager.GetCurrentClassLogger();
-
-        public object Tag { get; set; }        
+        private static Logger logger = LogManager.GetCurrentClassLogger();             
         #endregion
 
         #region Construtor
-        public QvsDataClient(string PipeName)
+        public QvxDataClient(string PipeName)
         {          
             this.pipeName = PipeName.Replace(@"\\.\pipe\", "");
         }
@@ -155,7 +153,11 @@ using System.IO;
                     {
                         if (DataClientDeliverData != null)
                         {
-                            var thread = new Thread(new ThreadStart(() => { DataClientDeliverData(this); }));
+                            var thread = new Thread(
+                                new ThreadStart(() => { 
+                                    DataClientDeliverData(this);
+                                    this.Close();
+                                }));
                             thread.IsBackground = false;
                             thread.Name = "DataClientDeliverDataThread";
                             thread.Start();
@@ -225,8 +227,7 @@ using System.IO;
             catch (Exception ex)
             {
                 logger.ErrorException("Exceptions:" + pipeName, ex);
-            }
-            Tag = null;
+            }            
         }
         #endregion
     }

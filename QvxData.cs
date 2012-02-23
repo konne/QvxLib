@@ -204,6 +204,8 @@ namespace QvxLib
                         }
                     }
 
+                    // TODO: block write Qvx (check fixed size,...)                    
+
                     QvxMaxLengthAttribute MaxSizeAttribute = null;
                     foreach (var itemAttribute in item.Item3)
                         if (itemAttribute is QvxMaxLengthAttribute)
