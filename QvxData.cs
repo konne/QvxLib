@@ -85,7 +85,9 @@ namespace QvxLib
 
                 if (mapType == typeof(Char)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_TEXT, ByteWidth = 4, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN } };
                 if (mapType == typeof(Char[])) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_TEXT, ByteWidth = 4, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN } };
-                if (mapType == typeof(Byte[])) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_BLOB, ByteWidth = 1, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN } };
+                
+                // BLOB not working
+                // if (mapType == typeof(Byte[])) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_BLOB, ByteWidth = 1, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_COUNTED, NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_WITH_UNDEFINED_DATA, FieldFormat = new FieldAttributes() { Type = FieldAttrType.UNKNOWN } };
 
                 if (mapType == typeof(DateTime)) return new QvxTableHeaderQvxFieldHeader() { Type = QvxFieldType.QVX_IEEE_REAL, ByteWidth = 8, ByteWidthSpecified = true, Extent = QvxFieldExtent.QVX_FIX, NullRepresentation = QvxNullRepresentation.QVX_NULL_NEVER, FieldFormat = new FieldAttributes() { Type = FieldAttrType.TIMESTAMP, nDec = 0 } };
 
@@ -94,7 +96,7 @@ namespace QvxLib
         }
         #endregion
 
-        private static void QvxFieldHeaderFromObject(ref List<QvxTableHeaderQvxFieldHeader> result, string prefix, ref string code1, ref string code2, Type t, ref int? blocksize)
+        private static void QvxFieldHeaderFromObject(ref List<QvxTableHeaderQvxFieldHeader> result, string prefix, ref string code1, ref string code2, Type t, ref int? blocksize, Dictionary<string, List<QvxBaseAttribute>> overrideAttributes)
         {
             string intprefix = prefix.Replace(".", "__");
 
@@ -108,7 +110,7 @@ namespace QvxLib
 
             foreach (FieldInfo item in t.GetFields())
             {
-                code1 += "            FieldInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetField(\"" + item.Name + "\");\r\n";
+                code1 += "            FieldInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetField(\"" + item.Name + "\");\r\n";                
 
                 valueList.Add(
                     new Tuple<Type, string, List<Attribute>, bool>(
@@ -123,15 +125,30 @@ namespace QvxLib
                 code1 += "            PropertyInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetProperty(\"" + item.Name + "\");\r\n";
 
                 if (item.CanRead)
-                    valueList.Add(
+                {
+                     valueList.Add(
                         new Tuple<Type, string, List<Attribute>, bool>(
                             item.PropertyType,
                             item.Name,
                             (from c in item.GetCustomAttributes(true) select c as Attribute).ToList(),
-                            true));
+                            true));                              
+                }
             }
 
 
+            if (overrideAttributes != null)
+            {
+                foreach (var item in valueList)
+                {
+                    var localname = intprefix.Replace("base__", "") + item.Item2;
+                    if (overrideAttributes.ContainsKey(localname))
+                    {
+                        var extAttrList = overrideAttributes[localname];
+                        if (extAttrList != null)
+                            item.Item3.AddRange(extAttrList);
+                    }
+                }
+            }
 
             foreach (var item in valueList)
             {
@@ -143,7 +160,7 @@ namespace QvxLib
                 {
                     code1 += "            Type T_" + intprefix + item.Item2 + "__ = " + intprefix + item.Item2 + ".FieldType;\r\n";
                     code2 = "                var " + intprefix + item.Item2 + "__item = " + getValue + ";\r\n" + code2;
-                    QvxFieldHeaderFromObject(ref result, prefix + item.Item2 + ".", ref  code1, ref code2, item.Item1, ref blocksize);
+                    QvxFieldHeaderFromObject(ref result, prefix + item.Item2 + ".", ref  code1, ref code2, item.Item1, ref blocksize, overrideAttributes);
                 }
                 else
                 {
@@ -232,23 +249,24 @@ namespace QvxLib
             }
         }
 
-        public static Tuple<List<QvxTableHeaderQvxFieldHeader>, string, string> FromObjectCode(Type t)
+        public static Tuple<List<QvxTableHeaderQvxFieldHeader>, string, string> FromObjectCode(Type t, Dictionary<string, List<QvxBaseAttribute>> overrideAttributes)
         {
             var result = new List<QvxTableHeaderQvxFieldHeader>();
             result = null;
             string code1 = "";
             string code2 = "";
             int? blocksize = 0;
-            QvxFieldHeaderFromObject(ref result, "base.", ref code1, ref code2, t, ref blocksize);
+            QvxFieldHeaderFromObject(ref result, "base.", ref code1, ref code2, t, ref blocksize, overrideAttributes);
             foreach (var item in result)
             {
                 item.FieldName = item.FieldName.Substring(5);
             }
             if (blocksize.HasValue)
             {
-                code1 = code1 + "              byte[] diffBuf = new Byte[" + blocksize.Value.ToString() + "];\r\n";
-                code2 = "                long startPos = bw.BaseStream.Position;\r\n" + code2;
-                code2 = code2 + "                ";
+                // TODO: blocksize
+                //code1 = code1 + "              byte[] diffBuf = new Byte[" + blocksize.Value.ToString() + "];\r\n";
+                //code2 = "                long startPos = bw.BaseStream.Position;\r\n" + code2;
+                //code2 = code2 + "                ";
             }
 
             return new Tuple<List<QvxTableHeaderQvxFieldHeader>, string, string>(result, code1, code2);
@@ -278,9 +296,9 @@ namespace QvxLib
             QvxWriterMethod.Invoke(null, new object[] { bw, items });
         }
 
-        public QvxWriteCode(Type type)
+        public QvxWriteCode(Type type, Dictionary<string, List<QvxBaseAttribute>> overrideAttributes)
         {
-            var data = QvxData.FromObjectCode(type);
+            var data = QvxData.FromObjectCode(type, overrideAttributes);
             var tbh = new QvxTableHeader();
             tbh.TableName = type.Name;
             tbh.Fields.AddRange(data.Item1);
@@ -369,15 +387,19 @@ namespace QvxLib {
             qvxWriteCode.WriteHeader(bw);
         }
 
-        public QvxWriter(Type type, BinaryWriter bw) :
-            this(new QvxWriteCode(type), bw)
+        public QvxWriter(Type type, Dictionary<string, List<QvxBaseAttribute>> overrideAttributes, BinaryWriter bw) :
+            this(new QvxWriteCode(type,overrideAttributes), bw)
         {
         }
 
-        public QvxWriter(Type type, String FileName)
-            : this(type, new BinaryWriter(File.OpenWrite(FileName)))
+        public QvxWriter(Type type, BinaryWriter bw) : this(type, null, bw) { }
+
+        public QvxWriter(Type type, Dictionary<string, List<QvxBaseAttribute>> overrideAttributes, String FileName)
+            : this(type, overrideAttributes, new BinaryWriter(File.OpenWrite(FileName)))
         {
         }
+
+        public QvxWriter(Type type, String FileName) : this(type, null, FileName) { }
         #endregion
 
         #region Add Date
@@ -407,8 +429,13 @@ namespace QvxLib {
         QvxWriteCode qvxWriteCode;
 
         public QvxSerializer(Type type)
+            : this(type, null)
         {
-            qvxWriteCode = new QvxWriteCode(type);
+        }
+
+        public QvxSerializer(Type type, Dictionary<string, List<QvxBaseAttribute>> overrideAttributes)
+        {
+            qvxWriteCode = new QvxWriteCode(type, overrideAttributes);
         }
 
         public void Serialize(IEnumerable items, BinaryWriter bw)
@@ -435,9 +462,11 @@ namespace QvxLib {
     {
         QvxSerializer qvxSerializer;
 
-        public QvxSerializer()
+        public QvxSerializer() : this(null) { }
+       
+        public QvxSerializer(Dictionary<string,List<QvxBaseAttribute>> overrideAttributes)
         {
-            qvxSerializer = new QvxSerializer(typeof(T));
+              qvxSerializer = new QvxSerializer(typeof(T),overrideAttributes);
         }
 
         public void Serialize(IEnumerable<T> items, BinaryWriter bw)

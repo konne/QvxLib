@@ -28,9 +28,15 @@ namespace QvxLib
     using System.Text;
     #endregion
 
+    #region QvxBaseAttribute
+    public abstract class QvxBaseAttribute : Attribute
+    {
+    }
+    #endregion
+
     #region QvxIgnoreAttribute
     [AttributeUsage(AttributeTargets.All)]
-    public class QvxIgnoreAttribute : Attribute
+    public class QvxIgnoreAttribute : QvxBaseAttribute
     {
         #region Variables & Properties
         private bool ignore = false;
@@ -68,7 +74,7 @@ namespace QvxLib
 
     #region QvxSubClassAsStringAttribute
     [AttributeUsage(AttributeTargets.All)]
-    public class QvxSubClassAsStringAttribute : Attribute
+    public class QvxSubClassAsStringAttribute : QvxBaseAttribute
     {
         #region Variables & Properties
         public static readonly QvxSubClassAsStringAttribute Default = new QvxSubClassAsStringAttribute(false);
@@ -105,7 +111,7 @@ namespace QvxLib
 
     #region QvxMaxLengthAttribute
     [AttributeUsage(AttributeTargets.All)]
-    public class QvxMaxLengthAttribute : Attribute
+    public class QvxMaxLengthAttribute : QvxBaseAttribute
     {
         private int maxLength = 0;
 
@@ -138,9 +144,9 @@ namespace QvxLib
     #region Extend class FieldAttrbutes with ApplyAttribute from Attributes
     public partial class FieldAttributes
     {
-        public void ApplyCustomAttributes(IEnumerable<Attribute> attributes)
+        public void ApplyCustomAttributes(IEnumerable<Attribute> Attributes)
         {
-            foreach (var item in attributes)
+            foreach (var item in Attributes)
             {
                 var FieldAttribute = item as IQvxFieldAttribute;
                 if (FieldAttribute != null)
@@ -155,7 +161,7 @@ namespace QvxLib
     /// Attribute to apply a Data type <see cref="FieldAttrType"/> Enum.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Enum | AttributeTargets.Struct)]
-    public class QvxFieldAttributesOverrideTypeAttribute : Attribute, IQvxFieldAttribute
+    public class QvxFieldAttributesOverrideTypeAttribute : QvxBaseAttribute, IQvxFieldAttribute
     {
         #region Variables
         /// <summary>
@@ -178,9 +184,9 @@ namespace QvxLib
 
         #region ApplyAttribute
         /// <summary>
-        /// Applies the attribute.
+        /// Applies the Attribute.
         /// </summary>
-        /// <param name="fieldAttributes">The field attributes.</param>
+        /// <param name="fieldAttributes">The field Attributes.</param>
         public void ApplyAttribute(FieldAttributes fieldAttributes)
         {
             fieldAttributes.Type = this.Type;
@@ -195,7 +201,7 @@ namespace QvxLib
     /// of significant digits for REAL type data. Allowed range(0..15).
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Enum | AttributeTargets.Struct)]
-    public class QvxFieldAttributenDecAttribute : Attribute, IQvxFieldAttribute
+    public class QvxFieldAttributenDecAttribute : QvxBaseAttribute, IQvxFieldAttribute
     {
         #region Variables
         public int nDec { get; private set; }
@@ -217,9 +223,9 @@ namespace QvxLib
 
         #region ApplyAttribute
         /// <summary>
-        /// Applies the attribute.
+        /// Applies the Attribute.
         /// </summary>
-        /// <param name="fieldAttributes">The field attributes.</param>
+        /// <param name="fieldAttributes">The field Attributes.</param>
         public void ApplyAttribute(FieldAttributes fieldAttributes)
         {
             fieldAttributes.nDec = this.nDec;
@@ -234,7 +240,7 @@ namespace QvxLib
     /// Attribute that set a Flag that indicating if thousand separator is used. Allowed range(0,1).
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Enum | AttributeTargets.Struct)]
-    public class QvxFieldAttributeuseThouAttribute : Attribute, IQvxFieldAttribute
+    public class QvxFieldAttributeuseThouAttribute : QvxBaseAttribute, IQvxFieldAttribute
     {
         #region Variables
         /// <summary>
@@ -259,9 +265,9 @@ namespace QvxLib
 
         #region ApplyAttribute
         /// <summary>
-        /// Applies the attribute.
+        /// Applies the Attribute.
         /// </summary>
-        /// <param name="fieldAttributes">The field attributes.</param>
+        /// <param name="fieldAttributes">The field Attributes.</param>
         public void ApplyAttribute(FieldAttributes fieldAttributes)
         {
             fieldAttributes.UseThou = this.useThou;
@@ -277,7 +283,7 @@ namespace QvxLib
     /// Format code that can be used to specify format for numbers, dates, time, timestamps and time intervals
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Enum | AttributeTargets.Struct)]
-    public class QvxFieldAttributeFmtAttribute : Attribute, IQvxFieldAttribute
+    public class QvxFieldAttributeFmtAttribute : QvxBaseAttribute, IQvxFieldAttribute
     {
         #region Variables
         /// <summary>
@@ -299,9 +305,9 @@ namespace QvxLib
 
         #region ApplyAttribute
         /// <summary>
-        /// Applies the attribute.
+        /// Applies the Attribute.
         /// </summary>
-        /// <param name="fieldAttributes">The field attributes.</param>
+        /// <param name="fieldAttributes">The field Attributes.</param>
         public void ApplyAttribute(FieldAttributes fieldAttributes)
         {
             fieldAttributes.Fmt = this.fmt;
@@ -315,7 +321,7 @@ namespace QvxLib
     /// Attribute to apply a Decimal separator.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Enum | AttributeTargets.Struct)]
-    public class QvxFieldAttributeDecAttribute : Attribute, IQvxFieldAttribute
+    public class QvxFieldAttributeDecAttribute : QvxBaseAttribute, IQvxFieldAttribute
     {
         #region Variables
         /// <summary>
@@ -337,9 +343,9 @@ namespace QvxLib
 
         #region ApplyAttribute
         /// <summary>
-        /// Applies the attribute.
+        /// Applies the Attribute.
         /// </summary>
-        /// <param name="fieldAttributes">The field attributes.</param>
+        /// <param name="fieldAttributes">The field Attributes.</param>
         public void ApplyAttribute(FieldAttributes fieldAttributes)
         {
             fieldAttributes.Dec = this.Dec;
@@ -353,7 +359,7 @@ namespace QvxLib
     /// Attribute to apply a Thousand separator.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Enum | AttributeTargets.Struct)]
-    public class QvxFieldAttributeThouAttribute : Attribute, IQvxFieldAttribute
+    public class QvxFieldAttributeThouAttribute : QvxBaseAttribute, IQvxFieldAttribute
     {
         #region Variables
         /// <summary>
@@ -375,9 +381,9 @@ namespace QvxLib
 
         #region ApplyAttribute
         /// <summary>
-        /// Applies the attribute.
+        /// Applies the Attribute.
         /// </summary>
-        /// <param name="fieldAttributes">The field attributes.</param>
+        /// <param name="fieldAttributes">The field Attributes.</param>
         public void ApplyAttribute(FieldAttributes fieldAttributes)
         {
             fieldAttributes.Thou = this.Thou;
