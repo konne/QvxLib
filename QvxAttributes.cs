@@ -109,6 +109,45 @@ namespace QvxLib
     }
     #endregion
 
+    #region QvxSubClassAsStringAttribute
+    [AttributeUsage(AttributeTargets.All)]    
+    [Obsolete("FEATURE: not working in this Version")]
+    public class QvxSubfieldAttribute : QvxBaseAttribute
+    {
+        #region Variables & Properties
+        public static readonly QvxSubfieldAttribute Default = new QvxSubfieldAttribute();
+
+        private string subFieldDevider = "";
+        public string SubFieldDevider
+        {
+            get
+            {
+                return subFieldDevider;
+            }
+        }
+        #endregion
+
+        #region Constructor
+        public QvxSubfieldAttribute(string subFieldDevider)
+        {            
+            this.subFieldDevider = subFieldDevider;
+        }
+
+        public QvxSubfieldAttribute():this(";")
+        {
+           
+        }
+        #endregion
+
+        #region IsDefaultAttribute
+        public override bool IsDefaultAttribute()
+        {
+            return this.SubFieldDevider == Default.SubFieldDevider;
+        }
+        #endregion
+    }
+    #endregion
+
     #region QvxMaxLengthAttribute
     [AttributeUsage(AttributeTargets.All)]
     public class QvxMaxLengthAttribute : QvxBaseAttribute

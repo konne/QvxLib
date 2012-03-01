@@ -65,7 +65,7 @@ using System.IO;
         #endregion
 
         #region Close
-        public void Close()
+        public new void Close()
         {
             close = true;
         }
