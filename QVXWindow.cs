@@ -30,15 +30,15 @@ namespace QvxLib
     #endregion
 
     #region QVXWindow
-    public sealed class QVXWindow : IWin32Window
+    public sealed class QvxWindow : IWin32Window
     {
         #region Constructors
-        public QVXWindow(int handle)
+        public QvxWindow(int handle)
         {
             Handle = new IntPtr(handle);
         }
 
-        public QVXWindow(IntPtr handle)
+        public QvxWindow(IntPtr handle)
         {
             Handle = handle;
         } 

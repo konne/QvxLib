@@ -110,7 +110,7 @@ namespace QvxLib
 
             foreach (FieldInfo item in t.GetFields())
             {
-                code1 += "            FieldInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetField(\"" + item.Name + "\");\r\n";                
+                code1 += "            FieldInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetField(\"" + item.Name + "\");\r\n";
 
                 valueList.Add(
                     new Tuple<Type, string, List<Attribute>, bool>(
@@ -126,12 +126,12 @@ namespace QvxLib
 
                 if (item.CanRead)
                 {
-                     valueList.Add(
-                        new Tuple<Type, string, List<Attribute>, bool>(
-                            item.PropertyType,
-                            item.Name,
-                            (from c in item.GetCustomAttributes(true) select c as Attribute).ToList(),
-                            true));                              
+                    valueList.Add(
+                       new Tuple<Type, string, List<Attribute>, bool>(
+                           item.PropertyType,
+                           item.Name,
+                           (from c in item.GetCustomAttributes(true) select c as Attribute).ToList(),
+                           true));
                 }
             }
 
@@ -154,6 +154,7 @@ namespace QvxLib
             {
                 if (item.Item3.Contains(QvxIgnoreAttribute.Yes)) continue;
 
+
                 string getValue = intprefix + item.Item2 + ".GetValue(" + intprefix + "item" + (item.Item4 ? ",null" : "") + ")";
 
                 if (!(item.Item1.Namespace != null && item.Item1.Namespace.StartsWith("System")) && !item.Item1.IsEnum && !item.Item3.Contains(QvxSubClassAsStringAttribute.Yes))
@@ -164,66 +165,92 @@ namespace QvxLib
                 }
                 else
                 {
-                    Type nullAbleType = Nullable.GetUnderlyingType(item.Item1);
-                    Type type = nullAbleType ?? item.Item1;
+                    var subfieldAtt = (from c in item.Item3 where c.GetType().IsAssignableFrom(typeof(QvxSubfieldAttribute)) select c).FirstOrDefault() as QvxSubfieldAttribute;
+
+
+                    var enumerable = (from c in item.Item1.GetInterfaces() where c.Name == typeof(IEnumerable<>).Name select c).FirstOrDefault();
 
                     QvxTableHeaderQvxFieldHeader fieldHeader = null;
 
-                    string stype = "";
-                    fieldHeader = NetType2QvxType.MapFieldType(type);
-                    if (NetType2QvxType.BinaryWriterTypes.Contains(type))
-                        stype = type.Name;
-
-
-                    // TODO: subfield for Arraytypes
-
-                    // TODO: second QVX for nested Tables
-
-                    if ((nullAbleType != null) | stype == "")
-                    {
-                        fieldHeader.NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA;
+                    if (subfieldAtt != null && enumerable != null)
+                    {                                                                       
+                        #region Subfield Types
+                        fieldHeader = NetType2QvxType.MapFieldType(typeof(string));
+                        string subfieldLen = subfieldAtt.SubFieldDevider.Length.ToString();
 
                         code2 += "                tmpValue = " + getValue + ";\r\n";
-                        code2 += "                if (tmpValue == null)\r\n";
-                        code2 += "                  bw.Write((byte)1);\r\n";
-                        code2 += "                else\r\n";
-                        code2 += "                {\r\n";
-                        code2 += "                  bw.Write((byte)0);\r\n";
-
-                        if (stype != "")
-                        {
-                            code2 += "                  bw.Write((tmpValue as Nullable<" + stype + ">).Value);\r\n";
-                        }
-                        else
-                        {
-                            if (type == typeof(byte[]))
-                                code2 += "                  sbuf =(byte[])tmpValue;\r\n";
-                            else
-                                if (type == typeof(Char[]))
-                                    code2 += "                  sbuf =Encoding.UTF8.GetBytes((Char[])tmpValue);\r\n";
-                                else
-                                    code2 += "                  sbuf =Encoding.UTF8.GetBytes(tmpValue.ToString());\r\n";
-                            code2 += "                  bw.Write((Int32)sbuf.Length);\r\n";
-                            code2 += "                  bw.Write(sbuf);\r\n";
-                        }
-                        code2 += "                }\r\n";
+                        code2 += "                sb = new StringBuilder();\r\n";
+                        code2 += "                foreach (var item in (IEnumerable<object>)tmpValue)\r\n";
+                        code2 += "                    sb.Append(item.ToString()+\"" + subfieldAtt.SubFieldDevider + "\");\r\n";
+                        code2 += "                if (sb.Length > 0) sb.Remove(sb.Length-" + subfieldLen + "," + subfieldLen + ");\r\n";
+                        code2 += "                sbuf =Encoding.UTF8.GetBytes(sb.ToString());\r\n";
+                        code2 += "                bw.Write((Int32)sbuf.Length);\r\n";
+                        code2 += "                bw.Write(sbuf);\r\n";
+                        #endregion
                     }
                     else
                     {
-                        if (type != typeof(Char))
+                        #region Normal Types
+                        Type nullAbleType = Nullable.GetUnderlyingType(item.Item1);
+                        Type type = nullAbleType ?? item.Item1;
+
+                        string stype = "";
+                        fieldHeader = NetType2QvxType.MapFieldType(type);
+                        if (NetType2QvxType.BinaryWriterTypes.Contains(type))
+                            stype = type.Name;
+
+                        // TODO: subfield for Arraytypes
+
+                        // TODO: second QVX for nested Tables                 
+
+                        if ((nullAbleType != null) | stype == "")
                         {
-                            var functioncall = "";
-                            if (type == typeof(DateTime))
-                                functioncall = ".ToOADate()";
-                            code2 += "                bw.Write(((" + stype + ")" + getValue + ")" + functioncall + ");\r\n";
+                            fieldHeader.NullRepresentation = QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA;
+
+                            code2 += "                tmpValue = " + getValue + ";\r\n";
+                            code2 += "                if (tmpValue == null)\r\n";
+                            code2 += "                  bw.Write((byte)1);\r\n";
+                            code2 += "                else\r\n";
+                            code2 += "                {\r\n";
+                            code2 += "                  bw.Write((byte)0);\r\n";
+
+                            if (stype != "")
+                            {
+                                code2 += "                  bw.Write((tmpValue as Nullable<" + stype + ">).Value);\r\n";
+                            }
+                            else
+                            {
+                                if (type == typeof(byte[]))
+                                    code2 += "                  sbuf =(byte[])tmpValue;\r\n";
+                                else
+                                    if (type == typeof(Char[]))
+                                        code2 += "                  sbuf =Encoding.UTF8.GetBytes((Char[])tmpValue);\r\n";
+                                    else
+                                        code2 += "                  sbuf =Encoding.UTF8.GetBytes(tmpValue.ToString());\r\n";
+                                code2 += "                  bw.Write((Int32)sbuf.Length);\r\n";
+                                code2 += "                  bw.Write(sbuf);\r\n";
+                            }
+                            code2 += "                }\r\n";
                         }
                         else
                         {
-                            code2 += "                sbuf =Encoding.UTF8.GetBytes(" + getValue + "+\"\");\r\n";
-                            code2 += "                bw.Write((Int32)sbuf.Length);\r\n";
-                            code2 += "                bw.Write(sbuf);\r\n";
-                        }
+                            if (type != typeof(Char))
+                            {
+                                var functioncall = "";
+                                if (type == typeof(DateTime))
+                                    functioncall = ".ToOADate()";
+                                code2 += "                bw.Write(((" + stype + ")" + getValue + ")" + functioncall + ");\r\n";
+                            }
+                            else
+                            {
+                                code2 += "                sbuf =Encoding.UTF8.GetBytes(" + getValue + "+\"\");\r\n";
+                                code2 += "                bw.Write((Int32)sbuf.Length);\r\n";
+                                code2 += "                bw.Write(sbuf);\r\n";
+                            }
+                        } 
+                        #endregion
                     }
+                       
 
                     // TODO: block write Qvx (check fixed size,...)                    
 
@@ -284,6 +311,19 @@ namespace QvxLib
         private byte[] QvxHeader;
         private MethodInfo QvxWriterMethod;
 
+        private QvxTableHeader qvxTableHeader = null;
+        internal QvxTableHeader QvxTableHeader
+        {
+            get
+            {
+                if (qvxTableHeader != null)
+                    // make a copy
+                    return QvxTableHeader.Deserialize(qvxTableHeader.Serialize());
+                else
+                    return new QvxTableHeader(); ;
+            }
+        }
+
         public void WriteHeader(BinaryWriter bw)
         {
             bw.Write(QvxHeader);
@@ -303,10 +343,12 @@ namespace QvxLib
         public QvxWriteCode(Type type, Dictionary<string, List<QvxBaseAttribute>> overrideAttributes)
         {
             var data = QvxData.FromObjectCode(type, overrideAttributes);
-            var tbh = new QvxTableHeader();
-            tbh.TableName = type.Name;
-            tbh.Fields.AddRange(data.Item1);
-            QvxHeader = Encoding.UTF8.GetBytes(tbh.Serialize());
+            qvxTableHeader = new QvxTableHeader();
+            qvxTableHeader.TableName = type.Name;
+            qvxTableHeader.Fields.AddRange(data.Item1);
+            QvxHeader = Encoding.UTF8.GetBytes(qvxTableHeader.Serialize());
+
+            
 
             #region Code Template
             string code = @"
@@ -323,7 +365,9 @@ namespace QvxLib {
         public static void QvxWriter(BinaryWriter bw, IEnumerable<object> list) 
         {           
             object tmpValue = null;    
-            byte[] sbuf = null;                   
+            byte[] sbuf = null; 
+            StringBuilder sb = null;    
+                          
             Type T_base__ = list.GetType().GetInterface(typeof(IEnumerable<>).Name).GetGenericArguments()[0];
 " + data.Item2 + @"                        
             foreach (var base__item in list) 
@@ -432,6 +476,17 @@ namespace QvxLib {
     {
         QvxWriteCode qvxWriteCode;
 
+        public QvxTableHeader QvxTableHeader
+        {
+            get
+            {
+                if (qvxWriteCode != null)
+                    return qvxWriteCode.QvxTableHeader;
+                else
+                    return new QvxTableHeader();
+            }
+        }
+
         public QvxSerializer(Type type)
             : this(type, null)
         {
@@ -465,6 +520,17 @@ namespace QvxLib {
     public class QvxSerializer<T>
     {
         QvxSerializer qvxSerializer;
+
+        public QvxTableHeader QvxTableHeader
+        {
+            get
+            {
+                if (qvxSerializer != null)
+                    return qvxSerializer.QvxTableHeader;
+                else
+                    return new QvxTableHeader();
+            }
+        }
 
         public QvxSerializer() : this(null) { }
        

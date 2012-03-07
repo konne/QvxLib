@@ -29,7 +29,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("QvxLib")]
 [assembly: AssemblyDescription("Library Qvx-Files and Connectors")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Konrad Mattheis")]
+[assembly: AssemblyCompany("ukma - Konrad Mattheis")]
 [assembly: AssemblyProduct("QvxLib")]
 [assembly: AssemblyCopyright("Copyright © Konrad Mattheis")]
 [assembly: AssemblyTrademark("")]
@@ -53,5 +53,5 @@ using System.Runtime.InteropServices;
 // Sie können alle Werte angeben oder die standardmäßigen Build- und Revisionsnummern 
 // übernehmen, indem Sie "*" eingeben:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.2.0")]
+[assembly: AssemblyFileVersion("1.0.2.0")]

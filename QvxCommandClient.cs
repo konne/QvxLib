@@ -32,8 +32,14 @@ namespace QvxLib
 using NLog;
     using System.Globalization;
     #endregion
-
+  
     #region QvxCommandClient
+    /// <summary>
+    /// if you want that Qlikview recognize your application as Qlikview Connector
+    /// you have to add the following line to the pos build events:
+    /// 
+    /// $(TargetDir)\tools\verpatch.exe $(TargetPath) /s "Qlikview Connector" "QvxEventLog"
+    /// </summary>
     public class QvxCommandClient
     {
         #region Variables & Properties
@@ -45,7 +51,7 @@ using NLog;
         bool close = false;
 
         private string pipeName;
-        private QVXWindow QVWindow;
+        private QvxWindow QVWindow;
 
         bool running = false;
         public bool Running
@@ -60,10 +66,10 @@ using NLog;
         #region Construtor
         public QvxCommandClient(string PipeName, Int32 QVWindow)
         {
-            ConstructorHelper(PipeName,new QVXWindow(QVWindow));
+            ConstructorHelper(PipeName,new QvxWindow(QVWindow));
         }
 
-        public QvxCommandClient(string PipeName, QVXWindow QVWindow)
+        public QvxCommandClient(string PipeName, QvxWindow QVWindow)
         {
             ConstructorHelper(PipeName, QVWindow);
         }
@@ -76,12 +82,12 @@ using NLog;
             if (args.Length < 2)
                 throw new ArgumentException("args need at least two Items");
 
-            var QVHwnd = new QVXWindow(Int32.Parse(args[0], NumberStyles.HexNumber));            
+            var QVHwnd = new QvxWindow(Int32.Parse(args[0], NumberStyles.HexNumber));            
 
             ConstructorHelper(args[1], QVWindow);
         }
 
-        private void ConstructorHelper(string PipeName, QVXWindow QVWindow)
+        private void ConstructorHelper(string PipeName, QvxWindow QVWindow)
         {
             thread = new Thread(new ThreadStart(QvxCommandWorker));
             thread.IsBackground = true;

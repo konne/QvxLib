@@ -110,8 +110,7 @@ namespace QvxLib
     #endregion
 
     #region QvxSubClassAsStringAttribute
-    [AttributeUsage(AttributeTargets.All)]    
-    [Obsolete("FEATURE: not working in this Version")]
+    [AttributeUsage(AttributeTargets.All)]       
     public class QvxSubfieldAttribute : QvxBaseAttribute
     {
         #region Variables & Properties

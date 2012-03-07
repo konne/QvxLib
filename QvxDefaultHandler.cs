@@ -230,8 +230,8 @@ namespace QvxLib
         public Func<string, QvxReply> QvxConnectHandler;
         public Func<QvxExecuteCommands, string, QvxDataClient, List<string>, QvxReply> QvxExecuteHandler;
         public Func<QvxReply> QvxExecuteErrorHandler;
-        public Func<string, QVXWindow, QvxReply> QvxEditConnectHandler;
-        public Func<string, string, QVXWindow, QvxReply> QvxEditSelectHandler;
+        public Func<string, QvxWindow, QvxReply> QvxEditConnectHandler;
+        public Func<string, string, QvxWindow, QvxReply> QvxEditSelectHandler;
         public Func<QvxGenericCommands, QvxReply> QvxGenericCommandHandler;
         public Func<QvxReply> QvxDisconnectHandler;        
         public Action QvxTerminateHandler;
