@@ -110,7 +110,7 @@ namespace QvxLib
 
             foreach (FieldInfo item in t.GetFields())
             {
-                code1 += "            FieldInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetField(\"" + item.Name + "\");\r\n";
+                code1 += "            MethodInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetField(\"" + item.Name + "\").GetGetMethod();\r\n";                
 
                 valueList.Add(
                     new Tuple<Type, string, List<Attribute>, bool>(
@@ -122,7 +122,7 @@ namespace QvxLib
 
             foreach (PropertyInfo item in t.GetProperties())
             {
-                code1 += "            PropertyInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetProperty(\"" + item.Name + "\");\r\n";
+                code1 += "            MethodInfo " + intprefix + item.Name + " = T_" + intprefix + ".GetProperty(\"" + item.Name + "\").GetGetMethod();\r\n";
 
                 if (item.CanRead)
                 {
@@ -154,8 +154,7 @@ namespace QvxLib
             {
                 if (item.Item3.Contains(QvxIgnoreAttribute.Yes)) continue;
 
-
-                string getValue = intprefix + item.Item2 + ".GetValue(" + intprefix + "item" + (item.Item4 ? ",null" : "") + ")";
+                string getValue = intprefix + item.Item2 + ".Invoke(" + intprefix + "item," + (item.Item4 ? "null" : "new object[] {" + intprefix + "item}") + ")";
 
                 if (!(item.Item1.Namespace != null && item.Item1.Namespace.StartsWith("System")) && !item.Item1.IsEnum && !item.Item3.Contains(QvxSubClassAsStringAttribute.Yes))
                 {
@@ -358,7 +357,23 @@ namespace QvxLib {
     using System.Linq;
     using System.Text; 
     using System.Reflection;
+    using System.Reflection.Emit;
     using System.IO; 
+
+
+    public static class FieldInfoExtensions
+    {
+        public static DynamicMethod GetGetMethod(this FieldInfo fi)
+        {       
+            DynamicMethod dm = new DynamicMethod(""Get"" + fi.Name,
+                fi.FieldType, new Type[] { fi.DeclaringType }, fi.DeclaringType);
+            ILGenerator il = dm.GetILGenerator();          
+            il.Emit(OpCodes.Ldarg_0);            
+            il.Emit(OpCodes.Ldfld, fi);            
+            il.Emit(OpCodes.Ret);
+            return dm;
+        }
+    }
 
     public class QvxWriterClass 
     { 
