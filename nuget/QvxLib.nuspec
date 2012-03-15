@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <version>1.0.3</version>
+    <authors>Konrad Mattheis</authors>
+    <owners>ukma - Konrad Mattheis</owners>
+    <licenseUrl>https://raw.github.com/konne/QvxLib/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/konne/QvxLib</projectUrl>
+    <dependencies>
+      <dependency id="NLog" version="2.0.0.2000" />
+    </dependencies>
+    <id>QvxLib</id>
+    <title>QvxLibrary</title>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>This library give you an easy way to generate Qlikview Qvx Files and helper classes to generate your own Qlikview Connector</description>
+    <copyright>(c) 2012 ukma - Konrad Mattheis</copyright>
+    <tags>qlikview qvx qvxlib</tags>
+  </metadata>
+  <files>
+    <file src="..\bin\release\QvxLib.dll" target="lib\net40\QvxLib.dll" />
+  </files>
+</package>

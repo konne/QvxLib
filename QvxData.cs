@@ -198,8 +198,6 @@ namespace QvxLib
                         if (NetType2QvxType.BinaryWriterTypes.Contains(type))
                             stype = type.Name;
 
-                        // TODO: subfield for Arraytypes
-
                         // TODO: second QVX for nested Tables                 
 
                         if ((nullAbleType != null) | stype == "")
