@@ -158,7 +158,7 @@ namespace QvxLib
 
                 if (!(item.Item1.Namespace != null && item.Item1.Namespace.StartsWith("System")) && !item.Item1.IsEnum && !item.Item3.Contains(QvxSubClassAsStringAttribute.Yes))
                 {
-                    code1 += "            Type T_" + intprefix + item.Item2 + "__ = " + intprefix + item.Item2 + ".FieldType;\r\n";
+                    code1 += "            Type T_" + intprefix + item.Item2 + "__ = " + intprefix + item.Item2 + ".ReturnType;\r\n";
                     code2 = "                var " + intprefix + item.Item2 + "__item = " + getValue + ";\r\n" + code2;
                     QvxFieldHeaderFromObject(ref result, prefix + item.Item2 + ".", ref  code1, ref code2, item.Item1, ref blocksize, overrideAttributes);
                 }
@@ -177,14 +177,19 @@ namespace QvxLib
                         fieldHeader = NetType2QvxType.MapFieldType(typeof(string));
                         string subfieldLen = subfieldAtt.SubFieldDevider.Length.ToString();
 
-                        code2 += "                tmpValue = " + getValue + ";\r\n";
-                        code2 += "                sb = new StringBuilder();\r\n";
-                        code2 += "                foreach (var item in (IEnumerable<object>)tmpValue)\r\n";
-                        code2 += "                    sb.Append(item.ToString()+\"" + subfieldAtt.SubFieldDevider + "\");\r\n";
-                        code2 += "                if (sb.Length > 0) sb.Remove(sb.Length-" + subfieldLen + "," + subfieldLen + ");\r\n";
-                        code2 += "                sbuf =Encoding.UTF8.GetBytes(sb.ToString());\r\n";
-                        code2 += "                bw.Write((Int32)sbuf.Length);\r\n";
-                        code2 += "                bw.Write(sbuf);\r\n";
+                        var genericArg = enumerable.GetGenericArguments().ToList();
+                        if (genericArg.Count == 1)
+                        {
+                            string EnumerableType = genericArg[0].FullName;
+                            code2 += "                tmpValue = " + getValue + ";\r\n";
+                            code2 += "                sb = new StringBuilder();\r\n";
+                            code2 += "                foreach (var item in (IEnumerable<" + EnumerableType + ">)tmpValue)\r\n";
+                            code2 += "                    sb.Append(item.ToString()+\"" + subfieldAtt.SubFieldDevider + "\");\r\n";
+                            code2 += "                if (sb.Length > 0) sb.Remove(sb.Length-" + subfieldLen + "," + subfieldLen + ");\r\n";
+                            code2 += "                sbuf =Encoding.UTF8.GetBytes(sb.ToString());\r\n";
+                            code2 += "                bw.Write((Int32)sbuf.Length);\r\n";
+                            code2 += "                bw.Write(sbuf);\r\n";
+                        }
                         #endregion
                     }
                     else
