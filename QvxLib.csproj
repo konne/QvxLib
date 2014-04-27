@@ -44,10 +44,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QvsDataClient.cs" />
+    <Compile Include="QvxDataClient.cs" />
     <Compile Include="QvxAttributes.cs" />
     <Compile Include="QvxCommandClient.cs" />
+    <Compile Include="QvxCommandServer.cs" />
     <Compile Include="QvxData.cs" />
+    <Compile Include="QvxDataServer.cs" />
     <Compile Include="QvxDefaultHandler.cs" />
     <Compile Include="QvxReply.cs">
       <SubType>Code</SubType>

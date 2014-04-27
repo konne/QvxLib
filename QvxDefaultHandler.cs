@@ -37,7 +37,8 @@ namespace QvxLib
         GetCustomCaption,
         DisableQlikViewSelectButton,
         IsConnected,
-        HaveStarField
+        HaveStarField,
+        JsonRequest
     }
     #endregion
 
@@ -83,6 +84,22 @@ namespace QvxLib
                 case QvxGenericCommands.GetCustomCaption:
                     if (GetCustomCaption != null)
                         result.OutputValues.Add(GetCustomCaption);
+                    break;
+                case QvxGenericCommands.JsonRequest:
+
+                    // TODO: handle new JSON Requests
+
+                    //               string method = request.Parameters[1];
+                    //this.SetupMParametersFromJsonRequest(request);
+                    //string[] userParams = request.Parameters.Skip<string>(5).Take<string>((request.Parameters.Length - 1)).ToArray<string>();
+                    //JsonResponse = this.HandleJsonRequest(method, userParams, this._mConnection);
+
+                    //            if (JsonRequest != null)                        
+                    //string connectString = request.Parameters[2].Replace("CUSTOM CONNECT TO", null).Replace("\"", null).Trim();
+                    //string parsableConnectionString = connectString + ";UserId=" + request.Parameters[3] + ";Password=" + request.Parameters[4] + ";";
+                    //this._mConnection.MParameters = QvxConnection.ParseConnectionString(parsableConnectionString);
+
+
                     break;
             }
 
@@ -364,6 +381,7 @@ namespace QvxLib
                     #region QVX_ABORT & QVX_PROGRESS
                     case QvxCommand.QVX_ABORT:
                     case QvxCommand.QVX_PROGRESS:
+                        // TODO !!
                         result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
                         break;
                     #endregion

@@ -29,7 +29,7 @@ namespace QvxLib
     using System.Threading;
     using System.IO.Pipes;
     using System.IO;
-using NLog;
+    using NLog;
     using System.Globalization;
     #endregion
   
@@ -128,7 +128,7 @@ using NLog;
                         {
                             #region Get QvxRequest
                             var iar = pipeClient.BeginRead(buf, 0, 4, null, state);
-                            while (!iar.IsCompleted) Thread.Sleep(1);
+                            while (!iar.IsCompleted) Thread.Sleep(1);   // TODO: add Timeout possibility
                             count = pipeClient.EndRead(iar);
                             if (count != 4) throw new Exception("Invalid Count Length");
                             buf2[0] = buf[3];
@@ -145,8 +145,7 @@ using NLog;
                             QvxRequest request;
                             try
                             {
-                                request = QvxRequest.Deserialize(sdata);
-                               
+                                request = QvxRequest.Deserialize(sdata);                               
                             }
                             catch (Exception ex)
                             {
