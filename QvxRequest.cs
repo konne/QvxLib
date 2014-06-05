@@ -2,13 +2,14 @@ namespace QvxLib
 {
     using System.Xml.Serialization;
     using System;
+    using System.Runtime.Serialization;
 
     public partial class QvxRequest
     {
-        [XmlIgnore]
+        [XmlIgnore, IgnoreDataMember]
         public QvxWindow QVWindow { get; set; }
 
-        [XmlIgnore]
+        [XmlIgnore, IgnoreDataMember]
         public object Connection { get; set; }
     }
 }

@@ -1,4 +1,24 @@
-﻿namespace QvxLib
+﻿/*
+    This Library is to have an easy access to Qvx Files and the Qlikview
+    Connector Interface.
+  
+    Copyright (C) 2011  Konrad Mattheis (mattheis@ukma.de)
+ 
+    This Software is available under the GPL and a comercial licence.
+    For further information to the comercial licence please contact
+    Konrad Mattheis. 
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+*/
+namespace QvxLib
 {
     #region Usings
     using NLog;
@@ -14,8 +34,6 @@ using System.Threading;
     {
         #region Variables & Properties
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
-        public Func<QvxRequest, QvxReply> HandleQvxRequest;
 
         Thread thread;    
 
@@ -65,10 +83,9 @@ using System.Threading;
         #endregion
 
         object lockSendQvxRequest = new object();
-
         QvxRequest request = null;
         QvxReply reply = null;
-        public QvxReply SendQvxRequest(QvxRequest request)
+        public QvxReply HandleQvxRequest(QvxRequest request)
         {
             lock(lockSendQvxRequest)
             {
@@ -81,21 +98,22 @@ using System.Threading;
             }
         }
 
+        #region QvxCommandServerWorker
         private void QvxCommandServerWorker()
-        {            
+        {
             using (NamedPipeServerStream pipeServer = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1))
             {
                 pipeServer.WaitForConnection();
-                
+
                 var buf = new byte[4];
                 var buf2 = new byte[4];
-                object state = new object();               
+                object state = new object();
                 while (running)
-                {                   
+                {
                     if (request != null)
                     {
                         #region Send Request
-                        byte[] bRequest = null;                      
+                        byte[] bRequest = null;
                         try
                         {
                             bRequest = ASCIIEncoding.ASCII.GetBytes(request.Serialize() + "\0");
@@ -114,7 +132,7 @@ using System.Threading;
                         buf2[3] = buf[0];
                         pipeServer.Write(buf2, 0, 4);
                         pipeServer.Write(bRequest, 0, bRequest.Length);
-                        pipeServer.WaitForPipeDrain(); 
+                        pipeServer.WaitForPipeDrain();
                         #endregion
 
                         #region Receive Response
@@ -130,9 +148,9 @@ using System.Threading;
                         var data = new byte[datalength];
                         count = pipeServer.Read(data, 0, datalength);
                         if (count != datalength) throw new Exception("Invalid Data Length");
-                
+
                         var sdata = ASCIIEncoding.ASCII.GetString(data);
-                        sdata = sdata.Replace("\0", "");                      
+                        sdata = sdata.Replace("\0", "");
                         try
                         {
                             reply = QvxReply.Deserialize(sdata);
@@ -142,11 +160,12 @@ using System.Threading;
                             logger.Error(ex);
                             reply = new QvxReply() { Result = QvxResult.QVX_PIPE_ERROR, ErrorMessage = ex.Message };
                             throw ex;
-                        }                                     
-                        #endregion              
-                    }                
+                        }
+                        #endregion
+                    }
                 }
-            }           
-        }        
+            }
+        }         
+        #endregion
     }
 }
