@@ -139,6 +139,7 @@ using System.IO;
         #region QvxDataWorker
         private void QvxDataWorker()
         {
+            Console.WriteLine("Start QvxDataWorker");
             try
             {
                 if (pipeName == null) return;
@@ -149,6 +150,7 @@ using System.IO;
                 {                   
                     pipeClient.Connect(1000);
 
+                    Console.WriteLine("Connected QvxDataWorker");
                     if (pipeClient.IsConnected)
                     {
                         if (DataClientDeliverData != null)
@@ -227,7 +229,8 @@ using System.IO;
             catch (Exception ex)
             {
                 logger.ErrorException("Exceptions:" + pipeName, ex);
-            }            
+            }
+            Console.WriteLine("Stoped QvxDataWorker");
         }
         #endregion
     }

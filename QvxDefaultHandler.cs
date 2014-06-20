@@ -246,6 +246,7 @@ namespace QvxLib
 
         public Func<string, QvxReply> QvxConnectHandler;
         public Func<QvxExecuteCommands, string, QvxDataClient, List<string>, QvxReply> QvxExecuteHandler;
+        public Func<QvxRequest, QvxReply> QvxRequestRawExecuteHandler;
         public Func<QvxReply> QvxExecuteErrorHandler;
         public Func<string, QvxWindow, QvxReply> QvxEditConnectHandler;
         public Func<string, string, QvxWindow, QvxReply> QvxEditSelectHandler;
@@ -288,25 +289,28 @@ namespace QvxLib
 
                     #region QVX_EXECUTE
                     case QvxCommand.QVX_EXECUTE:
-                        if (!((request.Parameters.Count == 2) | (request.Parameters.Count == 3)))
-                            result.Result = QvxResult.QVX_UNKNOWN_ERROR;
-                        else
-                        {
-                            QvxExecuteCommands cmd;
-                            if (!Enum.TryParse<QvxExecuteCommands>(request.Parameters[0], out cmd))
-                                cmd = QvxExecuteCommands.SQL;
-
-                            if (QvxExecuteHandler == null)
-                                result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
+                            if (!((request.Parameters.Count == 2) | (request.Parameters.Count == 3)))
+                                result.Result = QvxResult.QVX_UNKNOWN_ERROR;
                             else
-                            {
-                                List<string> list = new List<string>();
-                                if (request.Parameters.Count == 3)
-                                    list = request.Parameters[2].Split(new char[1] { ';' }).ToList();
+                                if (QvxRequestRawExecuteHandler != null)
+                                    result = QvxRequestRawExecuteHandler(request);
+                                else
+                                {
+                                    QvxExecuteCommands cmd;
+                                    if (!Enum.TryParse<QvxExecuteCommands>(request.Parameters[0], out cmd))
+                                        cmd = QvxExecuteCommands.SQL;
 
-                                result = QvxExecuteHandler(cmd, request.Parameters[0], new QvxDataClient(request.Parameters[1]), list);
-                            }
-                        }
+                                    if (QvxExecuteHandler == null)
+                                        result.Result = QvxResult.QVX_UNSUPPORTED_COMMAND;
+                                    else
+                                    {
+                                        List<string> list = new List<string>();
+                                        if (request.Parameters.Count == 3)
+                                            list = request.Parameters[2].Split(new char[1] { ';' }).ToList();
+
+                                        result = QvxExecuteHandler(cmd, request.Parameters[0], new QvxDataClient(request.Parameters[1]), list);
+                                    }
+                                }
                         break;
                     #endregion
 
