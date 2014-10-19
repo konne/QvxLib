@@ -228,7 +228,7 @@ using System.IO;
             }
             catch (Exception ex)
             {
-                logger.ErrorException("Exceptions:" + pipeName, ex);
+                logger.Error(ex);
             }
             Console.WriteLine("Stoped QvxDataWorker");
         }

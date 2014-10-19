@@ -107,8 +107,13 @@ namespace QvxLib
         private void QvxDataServerHandleReceivedDataWorker()
         {
             var sendList = new List<byte[]>();
-            while (running || (sendList.Count > 0 && HandleQvxReceivedData != null))
+            var counter = 3;
+            while (counter > 0)
             {
+                if (running || (sendList.Count > 0 && HandleQvxReceivedData != null))
+                    counter = 3;
+                else
+                    counter--;
                 try
                 {
                     if (HandleQvxReceivedData != null)
@@ -140,17 +145,22 @@ namespace QvxLib
                                 else finished = true;
                             }
                             sendList.Clear();
-                         //   Console.WriteLine("Date ToSend: " + buf.Length.ToString());
+                            if (buf.Length == 0) finished = true;
+
+                            Console.WriteLine("Date ToSend: " + finished.ToString()+" " + buf.Length.ToString());
                             HandleQvxReceivedData(buf, finished);
                         }
                     }
                     Thread.Sleep(5);
                 }
-                catch
+                catch(Exception ex)
                 {
+                    Console.WriteLine("Close Exception");
+                    logger.Error(ex);
                     sendList.Clear();
                 }
             }
+            Console.WriteLine("Close QvxDataServerHandleReceivedDataWorker");
         }      
         #endregion
 
@@ -168,7 +178,7 @@ namespace QvxLib
                     var iar = pipeServer.BeginRead(buf, 0, buf.Length, null, state);
                     while (!iar.IsCompleted) Thread.Sleep(1);   // TODO: add Timeout possibility
                     var count = pipeServer.EndRead(iar);
-                  //  Console.WriteLine("Date Read: " + count.ToString());//+ ASCIIEncoding.ASCII.GetString(buf, 0, count));
+                    Console.WriteLine("Date Read: " + count.ToString());//+ ASCIIEncoding.ASCII.GetString(buf, 0, count));
                     if (count > 0)
                     {
                         var sendBuf = new byte[count];
@@ -181,12 +191,15 @@ namespace QvxLib
                 }
                 if (pipeServer.IsConnected) pipeServer.Close();              
             }
+
+            Console.WriteLine("PIPE finished");
+
             lock (locksendQueue)
             {
                 sendQueue.Add(new byte[0]);
             }
-            Thread.Sleep(2000);
             running = false;
+            Console.WriteLine("Close QvxDataServerWorker");
         } 
         #endregion      
     } 

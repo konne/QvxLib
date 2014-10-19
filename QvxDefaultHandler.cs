@@ -257,8 +257,8 @@ namespace QvxLib
 
         #region HandleRequest
         public QvxReply HandleRequest(QvxRequest request)
-        {
-            logger.Debug("HandleRequest Command:", request.Command);           
+        {                       
+            logger.Debug("HandleRequest Command:"+request.Command.ToString());           
             var result = new QvxReply() { Result = QvxResult.QVX_OK };
             try
             {
